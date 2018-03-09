@@ -1,7 +1,8 @@
+global _start
 section .data
 
 section .bss
-
+fd: resd 1
 section .rodata
   ;;Socket calls
   SYS_SOCKET:      equ 1
@@ -39,29 +40,33 @@ csocket:
 ;; rdi -> socket fd
 ;; on ret rax will contain 0 || -1 if error
 csetsockopt:
-  mov rax, rdi
-  mov rdi, SOL_SOCKET
-  mov rsi, SO_REUSEADDR
-  mov r10, DWORD [r8]
+  mov rax, 54
+  mov rsi, SOL_SOCKET
+  mov rdx, SO_REUSEADDR
   mov r8, 4
+  push QWORD 4
+  mov r10, rsp
+
   syscall
+  add rsp, 8
   ret
 
 ;; params:
 ;; rdi -> socket fd
 ;; rsi -> port number in reverse byte order
+;;       (port 4321 = 0x10E1, in reverse byte order = 0xE110)
 ;; on ret rax will contain 0 || -1 if error
 cbind:
   mov rbp, rsp
-  mov rax, rdi ;;move passed fd
-
+  mov rax, 49
+  ;;rdi
   ;; Build struct sockaddr_in
   push DWORD INADDR_ANY
-  push WORD rsi
+  push WORD si
   push WORD AF_INET
-  mov rdi, rsp
+  mov rsi, rsp
 
-  mov rsi, 16
+  mov rdx, 16
   syscall
   mov rsp, rbp
   ret
@@ -70,11 +75,59 @@ cbind:
 ;; rdi -> socket fd
 ;; on ret rax will contain 0 || -1 if error
 clisten:
-  mov rax, rdi
-  mov rdi, 5
+  mov rax, 50
+  ;;rdi
+  mov rsi, 5
   syscall
   ret
 
+;; no params passed
+;; rdi -> socker fd
+;; on ret rax will contain fd || -1 if error
 caccept:
-  mov rax, rdi
-  mov rdi, 0
+  mov rax, 43
+  push QWORD 0
+  mov rdi, rsp
+  push QWORD 0
+  mov rsi, rsp
+  syscall
+
+exit:
+  mov rax, 60
+  syscall
+
+_start:
+  nop
+  nop
+  nop
+  nop
+
+  call csocket
+  test ax, ax
+  js .err
+  mov [fd], ax
+
+  mov rdi, [fd]
+  call csetsockopt
+  test ax, ax
+  js .err
+
+  mov rdi, [fd]
+  mov rsi, 0xE110
+  call cbind
+  test ax, ax
+  js .err
+
+  mov rdi, [fd]
+  call clisten
+  test ax, ax
+  js .err
+
+  mov rdi, [fd]
+  call caccept
+  test ax, ax
+  js .err
+
+.err:
+  mov dil, al
+  call exit
