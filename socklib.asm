@@ -86,10 +86,8 @@ clisten:
 ;; on ret rax will contain fd || -1 if error
 caccept:
   mov rax, 43
-  push QWORD 0
-  mov rdi, rsp
-  push QWORD 0
-  mov rsi, rsp
+  xor rsi, rsi
+  xor rdx, rdx
   syscall
 
 exit:
