@@ -1,17 +1,16 @@
-global _start
+global csocket
+global csetsockopt
+global cbind
+global clisten
+global caccept
+global exit
+
 section .data
 
 section .bss
-fd: resd 1
+
+
 section .rodata
-  ;;Socket calls
-  SYS_SOCKET:      equ 1
-  SYS_BIND:        equ 2
-  SYS_LISTEN:      equ 4
-  SYS_ACCEPT:      equ 5
-  SYS_SEND:        equ 9
-  SYS_RECV:        equ 10
-  SYS_SETSOCKOPT:  equ 14
   ;;Domains/Family
   AF_INET:         equ 2
   ;;Types
@@ -81,7 +80,7 @@ clisten:
   syscall
   ret
 
-;; no params passed
+;; params:
 ;; rdi -> socker fd
 ;; on ret rax will contain fd || -1 if error
 caccept:
@@ -90,42 +89,31 @@ caccept:
   xor rdx, rdx
   syscall
 
+;; params:
+;; rdi -> socket fd
+;; rsi -> port number in reverse byte order
+;;       (port 4321 = 0x10E1, in reverse byte order = 0xE110)
+;; rdx -> IP addr in reverse byte order
+;; on ret rax will contain 0 || -1 if error
+cconnect:
+  mov rbp, rsp
+  push QWORD 0
+  push DWORD rdx
+  push WORD rsi
+  push WORD AF_INET
+  
+
+  mov rax, 42
+  ;; rdi
+  mov rsi, rsp
+  mov rdx, 16
+  syscall
+  mov rsp, rbp
+  ret
+
+;; params:
+;; rdi -> socker fd
+;; on ret rax will contain fd || -1 if error
 exit:
   mov rax, 60
   syscall
-
-_start:
-  nop
-  nop
-  nop
-  nop
-
-  call csocket
-  test ax, ax
-  js .err
-  mov [fd], ax
-
-  mov rdi, [fd]
-  call csetsockopt
-  test ax, ax
-  js .err
-
-  mov rdi, [fd]
-  mov rsi, 0xE110
-  call cbind
-  test ax, ax
-  js .err
-
-  mov rdi, [fd]
-  call clisten
-  test ax, ax
-  js .err
-
-  mov rdi, [fd]
-  call caccept
-  test ax, ax
-  js .err
-
-.err:
-  mov dil, al
-  call exit
