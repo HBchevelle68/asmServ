@@ -4,6 +4,7 @@ global cbind
 global clisten
 global caccept
 global exit
+global cconnect
 
 section .data
 
@@ -98,10 +99,10 @@ caccept:
 cconnect:
   mov rbp, rsp
   push QWORD 0
-  push DWORD rdx
-  push WORD rsi
+  push rdx
+  push rsi
   push WORD AF_INET
-  
+
 
   mov rax, 42
   ;; rdi

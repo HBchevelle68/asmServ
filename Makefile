@@ -5,12 +5,13 @@ DBFLAGS = $(CCFLAGS) -g -F dwarf
 LNK = ld -o
 
 
+
 all: clean $(OBJS)
 
-server: server.o socklib.o
+client: client.o socklib.o
 	$(LNK) $@ -g $^
 
-client: client.0 socklib.o
+server: server.o socklib.o
 	$(LNK) $@ -g $^
 
 %.o: %.asm
