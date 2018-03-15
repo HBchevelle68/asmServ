@@ -4,8 +4,6 @@ CCFLAGS = -felf64
 DBFLAGS = $(CCFLAGS) -g -F dwarf
 LNK = ld -o
 
-
-
 all: clean $(OBJS)
 
 client: client.o socklib.o
@@ -14,8 +12,11 @@ client: client.o socklib.o
 server: server.o socklib.o
 	$(LNK) $@ -g $^
 
+file: filelib.o
+	$(LNK) $@ -g $^
+
 %.o: %.asm
 	$(CC) $(DBFLAGS) $< -o $@
 
 clean::
-	rm -fr *.o
+	rm -fr *.o $(OBJS) file

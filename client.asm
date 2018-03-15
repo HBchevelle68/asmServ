@@ -9,17 +9,17 @@ extern exit
 extern cconnect
 
 section .data
+;; Nothing currently, possible use later
 
 section .bss
 fd: resd 1
 
 section .rodata
-
+;; Nothing currently, possible use later
 
 section .text
 
 _start:
-  nop
   nop
   nop
   nop

@@ -7,13 +7,14 @@ extern clisten
 extern caccept
 extern exit
 
-
 section .data
+;; Nothing currently, possible use later
 
 section .bss
-  fd:    resd 1
+  sfd:    resd 1
 
 section .rodata
+;; Nothing currently, possible use later
 
 section .text
 
@@ -21,30 +22,29 @@ _start:
   nop
   nop
   nop
-  nop
 
   call    csocket
   test    ax, ax
   js      .err
-  mov     [fd], ax
+  mov     [sfd], ax
 
-  mov     rdi, [fd]
+  mov     rdi, [sfd]
   call    csetsockopt
   test    ax, ax
   js     .err
 
-  mov    rdi, [fd]
+  mov    rdi, [sfd]
   mov    rsi, 0xE110
   call   cbind
   test   ax, ax
   js     .err
 
-  mov    rdi, [fd]
+  mov    rdi, [sfd]
   call   clisten
   test   ax, ax
   js     .err
 
-  mov    rdi, [fd]
+  mov    rdi, [sfd]
   call   caccept
   test   ax, ax
   js     .err

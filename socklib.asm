@@ -7,22 +7,23 @@ global exit
 global cconnect
 
 section .data
+;; Nothing currently, possible use later
 
 section .bss
-
+;; Nothing currently, possible use later
 
 section .rodata
   ;;Domains/Family
-  AF_INET:         equ 2
+  AF_INET:        equ 2
   ;;Types
-  SOCK_STREAM:     equ 1
+  SOCK_STREAM:    equ 1
   ;;Protocols
-  IPPROTO_IP:      equ 0
+  IPPROTO_IP:     equ 0
   ;;Socket options
-  SOL_SOCKET:      equ 1
-  SO_REUSEADDR:    equ 2
+  SOL_SOCKET:     equ 1
+  SO_REUSEADDR:   equ 2
   ;;Addresses
-  INADDR_ANY:      equ 0
+  INADDR_ANY:     equ 0
 
 section .text
 
@@ -82,7 +83,7 @@ clisten:
   ret
 
 ;; params:
-;; rdi -> socker fd
+;; rdi -> socket fd
 ;; on ret rax will contain fd || -1 if error
 caccept:
   mov rax, 43
@@ -103,7 +104,6 @@ cconnect:
   push rsi
   push WORD AF_INET
 
-
   mov rax, 42
   ;; rdi
   mov rsi, rsp
@@ -113,8 +113,8 @@ cconnect:
   ret
 
 ;; params:
-;; rdi -> socker fd
-;; on ret rax will contain fd || -1 if error
+;; rdi -> return value
+;; on syscall exits and returns passed value
 exit:
   mov rax, 60
   syscall
