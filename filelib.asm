@@ -1,4 +1,7 @@
-global _start
+global fopen
+global close
+global write
+
 section .data
 ;; Nothing currently, possible use later
 section .bss
@@ -22,16 +25,36 @@ section .rodata
 section .text
 ;; params:
 ;; rdi -> filename/filepath
+;; on ret, rax will contain fd || -1 if error
 fopen:
   mov rax, 2
   ;; rdi
-  mov rsi, O_CREAT
-  xor rdx, rdx
+  mov rsi, O_CREAT | O_TRUNC | O_RDWR
+  mov rdx, 0666o
   syscall
   ret
 
+;; params:
+;; rdi -> fd of file to close
+;; on ret, rax will contain 0 || -1 if error
+close:
+  mov rax, 3
+  ;; rdi
+  syscall
+  ret
 
-;; Here to supress entry warning
-_start:
-  nop
-  nop
+;; sys_pwrite64
+;; params:
+;; rdi -> fd of file
+;; rsi -> buffer
+;; rdx -> buffer size
+;; r10 -> offset
+;; on ret, rax will contain # bytes written || -1 on error
+write:
+  mov rax, 18
+  ;; rdi
+  ;; rsi
+  ;; rdx
+  ;; r10
+  syscall
+  ret

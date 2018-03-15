@@ -15,8 +15,11 @@ server: server.o socklib.o
 file: filelib.o
 	$(LNK) $@ -g $^
 
+test: test.o socklib.o filelib.o
+	$(LNK) $@ -g $^
+
 %.o: %.asm
 	$(CC) $(DBFLAGS) $< -o $@
 
 clean::
-	rm -fr *.o $(OBJS) file
+	rm -fr *.o $(OBJS) file test testfile.txt
