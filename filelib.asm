@@ -49,7 +49,7 @@ close:
 ;; rsi -> buffer
 ;; rdx -> buffer size
 ;; r10 -> offset
-;; on ret, rax will contain # bytes written || -1 on error
+;; on ret, rax will contain # bytes written to buffer || -1 on error
 write:
   mov rax, 18
   ;; rdi
