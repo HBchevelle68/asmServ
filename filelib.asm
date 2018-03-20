@@ -1,6 +1,7 @@
 global fopen
 global close
-global write
+global writetfd
+global readtfd
 
 section .data
 ;; Nothing currently, possible use later
@@ -50,8 +51,24 @@ close:
 ;; rdx -> buffer size
 ;; r10 -> offset
 ;; on ret, rax will contain # bytes written || -1 on error
-write:
+writetfd:
   mov rax, 18
+  ;; rdi
+  ;; rsi
+  ;; rdx
+  ;; r10
+  syscall
+  ret
+
+;; sys_pread64
+;; params:
+;; rdi -> fd of file
+;; rsi -> buffer
+;; rdx -> buffer size
+;; r10 -> offset
+;; on ret, rax will contain # bytes written || -1 on error
+readtfd:
+  mov rax, 17
   ;; rdi
   ;; rsi
   ;; rdx
