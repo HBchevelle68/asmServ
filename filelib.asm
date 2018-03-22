@@ -2,6 +2,9 @@ global fopen
 global close
 global writetfd
 global readtfd
+global filestatus
+
+%define F_OK 0
 
 section .data
 ;; Nothing currently, possible use later
@@ -51,7 +54,7 @@ close:
 ;; rdx -> buffer size
 ;; r10 -> offset
 ;; on ret, rax will contain # bytes written to buffer || -1 on error
-write:
+writetfd:
   mov rax, 18
   ;; rdi
   ;; rsi
@@ -74,5 +77,16 @@ readtfd:
   ;; rsi
   ;; rdx
   ;; r10
+  syscall
+  ret
+
+  ;; sys_access
+  ;; uses F_OK mode to retrieve wether or not file exists
+  ;; rdi -> char* of file
+  ;; on ret, rax will return 0 if succesful and file exists || -1 if file does not exist
+filestatus:
+  mov rax, 21
+  ;; rdi
+  mov rsi, F_OK
   syscall
   ret
