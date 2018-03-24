@@ -5,6 +5,7 @@ extern close
 extern writetfd
 extern exit
 extern readtfd
+extern filestatus
 
 section .data
   testfile: db "testfile.txt", 0x0
@@ -24,6 +25,12 @@ section .text
 _start:
   nop
   nop
+
+  mov rdi, testfile
+  call filestatus
+  test al, al
+  js .err
+
 
   mov rdi, testfile
   call fopen
@@ -61,5 +68,5 @@ _start:
 
 
 .err:
-  mov  dil, al
+  mov  rdi, rax
   call exit
