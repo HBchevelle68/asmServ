@@ -11,7 +11,7 @@ section .data
   .len: equ $ - testfile
   string: db "This is a test 129373456", 0xa, 0x0
   .len: equ $ - string
-  buffer: times 50 db 0
+  buffer: times 50 db 0x0
   .len: equ $ - buffer
 
 section .bss

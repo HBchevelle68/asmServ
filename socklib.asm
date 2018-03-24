@@ -8,7 +8,8 @@ global cconnect
 
 section .data
 ;; Nothing currently, possible use later
-
+  buffer: times 100 db 0
+  .len: equ $- buffer
 section .bss
 ;; Nothing currently, possible use later
 
@@ -110,6 +111,19 @@ cconnect:
   mov rdx, 16
   syscall
   mov rsp, rbp
+  ret
+
+;; params:
+;; rdi -> socket fd
+;; rsi -> buffer
+;; rdx -> buffer size
+;; on ret, rax will contain # of bytes read || -1 if error
+cread:
+  mov rax, 0
+  ;; rdi
+  ;; rsi
+  ;; rdx
+  syscall
   ret
 
 ;; params:
