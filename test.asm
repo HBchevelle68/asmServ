@@ -26,7 +26,7 @@ _start:
   nop
   nop
 
-
+%if 0
   pop rsi ;; argc
   pop rsi ;; elf filepath
   pop rsi ;; *argv[0]
@@ -34,12 +34,7 @@ _start:
   mov rdi, 1
   mov rdx, 20
   syscall
-
-
-
-
-
-
+%endif  
 
   mov rdi, testfile
   call filestatus
