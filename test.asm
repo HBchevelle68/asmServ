@@ -65,6 +65,7 @@ _start:
   test al, al
   js .err
 
+
 .err:
   mov  rdi, rax
   call exit
