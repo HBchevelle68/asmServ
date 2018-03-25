@@ -26,6 +26,21 @@ _start:
   nop
   nop
 
+
+  pop rsi ;; argc
+  pop rsi ;; elf filepath
+  pop rsi ;; *argv[0]
+  mov rax, 1
+  mov rdi, 1
+  mov rdx, 20
+  syscall
+
+
+
+
+
+
+
   mov rdi, testfile
   call filestatus
   test al, al

@@ -67,7 +67,7 @@ _start:
   test   ax, ax
   js     .err
 
-
+  ;; test print
   mov    rdi, 1
   mov    rsi, buffer
   mov    rdx, buffer.len
