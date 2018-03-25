@@ -6,12 +6,17 @@ extern cbind
 extern clisten
 extern caccept
 extern exit
+extern cwrite
+extern cread
+extern close
 
 section .data
 ;; Nothing currently, possible use later
-
+  buffer: times 100 db 0
+  .len: equ $- buffer
 section .bss
   sfd:    resd 1
+  tfd:    resd 1
 
 section .rodata
 ;; Nothing currently, possible use later
@@ -53,10 +58,28 @@ _start:
   call   caccept
   test   ax, ax
   js     .err
+  mov    [tfd], rax
 
-  
+  mov    rdi, [tfd]
+  mov    rsi, buffer
+  mov    rdx, buffer.len
+  call   cread
+  test   ax, ax
+  js     .err
+
+
+  mov    rdi, 1
+  mov    rsi, buffer
+  mov    rdx, buffer.len
+  call   cwrite
+  test   ax, ax
+  js     .err
 
   ;; temp error label/exit
 .err:
-  mov    dil, al
+  mov    r10, rax
+  mov    rdi, [tfd]
+  call   close
+  mov    rdi, [sfd]
+  call   close
   call   exit

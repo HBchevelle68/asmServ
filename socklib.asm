@@ -5,11 +5,13 @@ global clisten
 global caccept
 global exit
 global cconnect
+global cread
+global cwrite
+global close
 
 section .data
 ;; Nothing currently, possible use later
-  buffer: times 100 db 0
-  .len: equ $- buffer
+
 section .bss
 ;; Nothing currently, possible use later
 
@@ -91,7 +93,7 @@ caccept:
   xor rsi, rsi
   xor rdx, rdx
   syscall
-
+  ret
 ;; params:
 ;; rdi -> socket fd
 ;; rsi -> port number in reverse byte order
@@ -114,12 +116,25 @@ cconnect:
   ret
 
 ;; params:
-;; rdi -> socket fd
+;; rdi -> fd
 ;; rsi -> buffer
 ;; rdx -> buffer size
 ;; on ret, rax will contain # of bytes read || -1 if error
 cread:
   mov rax, 0
+  ;; rdi
+  ;; rsi
+  ;; rdx
+  syscall
+  ret
+
+;; params:
+;; rdi -> fd
+;; rsi -> buffer
+;; rdx -> buffer size
+;; on ret, rax will contain # of bytes read || -1 if error
+cwrite:
+  mov rax, 1
   ;; rdi
   ;; rsi
   ;; rdx

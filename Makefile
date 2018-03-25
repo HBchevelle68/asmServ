@@ -6,10 +6,10 @@ LNK = ld -o
 
 all: clean $(OBJS)
 
-client: client.o socklib.o
+client: client.o socklib.o filelib.o
 	$(LNK) $@ -g $^
 
-server: server.o socklib.o
+server: server.o socklib.o filelib.o
 	$(LNK) $@ -g $^
 
 file: filelib.o
