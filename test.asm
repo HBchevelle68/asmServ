@@ -60,12 +60,10 @@ _start:
   mov rdx, buffer.len
   syscall
 
-  mov rdi, rax
+  mov rdi, [fd]
   call close
   test al, al
   js .err
-
-
 
 .err:
   mov  rdi, rax
