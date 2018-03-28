@@ -20,22 +20,22 @@ global filestatus
 %define SEEK_CUR 1
 %define SEEK_END 2
 
+;;   flags
 ;create file if file doesnt exists
 ;truncate file
 ;append to file
+%define O_CREAT 100o
+%define O_TRUNC 1000o
+%define O_APPEND 2000o
 
 section .data
 ;; Nothing currently, possible use later
 section .bss
 ;; Nothing currently, possible use later
-
 section .rodata
 
 
-  ;flags
-  O_CREAT:        equ 100o
-  O_TRUNC:        equ 1000o
-  O_APPEND:       equ 2000o
+
 
 
 
