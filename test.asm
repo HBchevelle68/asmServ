@@ -34,7 +34,7 @@ _start:
   mov rdi, 1
   mov rdx, 20
   syscall
-%endif  
+%endif
 
   mov rdi, testfile
   call filestatus

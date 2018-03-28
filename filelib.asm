@@ -4,7 +4,25 @@ global writetfd
 global readtfd
 global filestatus
 
-%define F_OK 0
+;modes
+;read-only
+;wirte-only
+;read and write
+%define F_OK      0
+%define O_RDONLY  0
+%define O_WRONLY  1
+%define O_RDWR    2
+
+;set file offset to offset
+;set file offset to current plus offset
+;set file offset to EOF plus offset
+%define SEEK_SET 0
+%define SEEK_CUR 1
+%define SEEK_END 2
+
+;create file if file doesnt exists
+;truncate file
+;append to file
 
 section .data
 ;; Nothing currently, possible use later
@@ -12,19 +30,14 @@ section .bss
 ;; Nothing currently, possible use later
 
 section .rodata
-  ;modes
-  O_RDONLY:       equ 0        ;read-only
-  O_WRONLY:       equ 1        ;wirte-only
-  O_RDWR:         equ 2        ;read and write
+
 
   ;flags
-  O_CREAT:        equ 100o     ;create file if file doesnt exists
-  O_TRUNC:        equ 1000o    ;truncate file
-  O_APPEND:       equ 2000o    ;append to file
+  O_CREAT:        equ 100o
+  O_TRUNC:        equ 1000o
+  O_APPEND:       equ 2000o
 
-  SEEK_SET:	      equ 0	       ;set file offset to offset
-  SEEK_CUR:	      equ 1	       ;set file offset to current plus offset
-  SEEK_END:       equ	2	       ;set file offset to EOF plus offset
+
 
 section .text
 ;; params:
