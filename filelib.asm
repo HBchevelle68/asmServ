@@ -1,10 +1,14 @@
+;;
+;;   syscall wrappers
+;;
+
 global fopen
 global close
 global writetfd
 global readtfd
 global filestatus
 
-;modes
+;     modes
 ;read-only
 ;wirte-only
 ;read and write

@@ -1,3 +1,7 @@
+;;
+;;   syscall wrappers
+;;
+
 global csocket
 global csetsockopt
 global cbind
@@ -9,6 +13,20 @@ global cread
 global cwrite
 global close
 
+;;Domains/Family
+%define AF_INET         2
+;;Types
+%define SOCK_STREAM     1
+;;Protocols
+%define IPPROTO_IP      0
+;;Socket options
+%define SOL_SOCKET      1
+%define SO_REUSEADDR    2
+;;Addresses
+%define INADDR_ANY      0
+
+
+
 section .data
 ;; Nothing currently, possible use later
 
@@ -16,17 +34,6 @@ section .bss
 ;; Nothing currently, possible use later
 
 section .rodata
-  ;;Domains/Family
-  AF_INET:        equ 2
-  ;;Types
-  SOCK_STREAM:    equ 1
-  ;;Protocols
-  IPPROTO_IP:     equ 0
-  ;;Socket options
-  SOL_SOCKET:     equ 1
-  SO_REUSEADDR:   equ 2
-  ;;Addresses
-  INADDR_ANY:     equ 0
 
 section .text
 

@@ -12,9 +12,6 @@ client: client.o socklib.o filelib.o
 server: server.o socklib.o filelib.o
 	$(LNK) $@ -g $^
 
-file: filelib.o
-	$(LNK) $@ -g $^
-
 test: test.o socklib.o filelib.o
 	$(LNK) $@ -g $^
 
