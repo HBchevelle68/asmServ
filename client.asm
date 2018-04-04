@@ -17,6 +17,7 @@ string: db "This is a test 129373456", 0xa, 0x0
 
 section .bss
 fd: resd 1
+file: resq 1
 
 section .rodata
 ;; Nothing currently, possible use later
@@ -27,6 +28,13 @@ _start:
   nop
   nop
   nop
+
+
+  mov rsi, [rsp] ;; argc
+  cmp rsi, 2
+  jl  .err
+  mov rsi, [rsp+16] ;; *argv[0]
+  mov QWORD [file], rsi
 
   call   csocket
   test   ax, ax
