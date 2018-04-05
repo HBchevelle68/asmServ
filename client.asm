@@ -24,17 +24,28 @@ section .rodata
 
 section .text
 
+string_length:
+  xor    rax, rax
+  .loop:
+  cmp    byte [rdi+rax], 0
+  je     .end
+  inc    rax
+  jmp    .loop
+  .end:
+  ret
+
+
 _start:
   nop
   nop
   nop
 
 
-  mov rsi, [rsp] ;; argc
-  cmp rsi, 2
-  jl  .err
-  mov rsi, [rsp+16] ;; *argv[0]
-  mov QWORD [file], rsi
+  mov    rsi, [rsp] ;; argc
+  cmp    rsi, 2
+  jl     .err
+  mov    rsi, [rsp+16] ;; *argv[1]
+  mov    QWORD [file], rsi
 
   call   csocket
   test   ax, ax
@@ -49,9 +60,12 @@ _start:
   test   ax, ax
   js     .err
 
+  
+  mov    rdi, [file]
+  call   string_length
   mov    rdi, [fd]
-  mov    rsi, string
-  mov    rdx, string.len
+  mov    rsi, [file]
+  mov    rdx, rax
   call   cwrite
   test   ax, ax
   js     .err

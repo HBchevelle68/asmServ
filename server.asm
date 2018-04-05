@@ -9,6 +9,7 @@ extern exit
 extern cwrite
 extern cread
 extern close
+extern filestatus
 
 section .data
 ;; Nothing currently, possible use later
@@ -60,12 +61,19 @@ _start:
   js     .err
   mov    [tfd], rax
 
+  ;; recv
   mov    rdi, [tfd]
   mov    rsi, buffer
   mov    rdx, buffer.len
   call   cread
   test   ax, ax
   js     .err
+
+  ;;check for file
+  mov    rdi, buffer
+  call   filestatus
+  test   al, al
+  jnz    .err
 
   ;; test print
   mov    rdi, 1
@@ -81,5 +89,6 @@ _start:
   mov    rdi, [tfd]
   call   close
   mov    rdi, [sfd]
+  mov    rax, r10
   call   close
   call   exit
