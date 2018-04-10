@@ -13,11 +13,12 @@ extern filestatus
 
 section .data
 ;; Nothing currently, possible use later
+
   buffer: times 100 db 0
   .len: equ $- buffer
 section .bss
-  sfd:    resd 1
-  tfd:    resd 1
+  sfd:    resd 1 ;;Server socket file desc
+  tfd:    resd 1 ;;Temp socket file desc
 
 section .rodata
 ;; Nothing currently, possible use later
@@ -69,6 +70,7 @@ _start:
   test   ax, ax
   js     .err
 
+  ;; need to check contetns of rdi, see why sys_access not working as expected
   ;;check for file
   mov    rdi, buffer
   call   filestatus
