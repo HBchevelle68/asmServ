@@ -16,7 +16,9 @@ section .data
   .len: equ $ - buffer
 
 section .bss
-  fd: resd 1
+  fd:  resd 1
+  var: resd 1
+  tmp: resd 1
 
 section .rodata
 
@@ -26,23 +28,23 @@ _start:
   nop
   nop
 
-%if 0
-  pop rsi ;; argc
-  pop rsi ;; elf filepath
-  pop rsi ;; *argv[0]
-  mov rax, 1
-  mov rdi, 1
-  mov rdx, 20
+  mov rax, 0
+  mov rdi, 0
+  mov rsi, buffer
+  mov rdx, buffer.len
   syscall
-%endif
+  mov [var], rax ;; save num bytes
+  mov [buffer+rax-1], BYTE 0x0 ;; remove /n from buffer
+  jmp false
 
-  mov rdi, testfile
+%if 0
+  mov rdi, buffer
   call filestatus
   test al, al
   js .err
-
-
-  mov rdi, testfile
+%endif
+false:
+  mov rdi, [buffer]
   call fopen
   test al, al
   js .err
@@ -70,12 +72,9 @@ _start:
   mov rdx, buffer.len
   syscall
 
-  mov rdi, [fd]
-  call close
-  test al, al
-  js .err
-
 
 .err:
+  mov rdi, [fd]
+  call close
   mov  rdi, rax
   call exit
