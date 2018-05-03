@@ -71,12 +71,13 @@ _start:
   mov    rsi, [rsp+16] ;; *argv[1]
   mov    QWORD [file], rsi
 
+  ;; print file name
   mov    rax, 1
   mov    rdi, 1
   mov    rsi, [file]
   mov    rdx, 12
   syscall
-
+  ;; testing string length function
   mov rdi, [file]
   call string_length
 

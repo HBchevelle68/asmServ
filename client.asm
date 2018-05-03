@@ -38,7 +38,6 @@ string_length:
 _start:
   nop
   nop
-  nop
 
   ;;Make sure enough args passed
   mov    rsi, [rsp] ;; argc
@@ -57,8 +56,8 @@ _start:
 
   ;;connect to server
   mov    rdi, [fd]
-  mov    rsi, 0xE110
-  mov    rdx, 0x0100007f
+  mov    rsi, 0xE110 ;; hardcoded port 4321 for now
+  mov    rdx, 0x0100007f ;; hardcoded ip 127.0.0.1 for now
   call   cconnect
   test   ax, ax
   js     .err
@@ -74,6 +73,7 @@ _start:
   call   cwrite
   test   ax, ax
   js     .err
+
 
 .err:
   mov    dil, al

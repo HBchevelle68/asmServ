@@ -18,5 +18,11 @@ test: test.o socklib.o filelib.o
 %.o: %.asm
 	$(CC) $(DBFLAGS) $< -o $@
 
+socklib.o: socklib.inc
+	$(CC) $(DBFLAGS) $< -o $@
+
+filelib.o: filelib.inc
+	$(CC) $(DBFLAGS) $< -o $@
+
 clean::
 	rm -fr *.o $(OBJS) file test testfile.txt
