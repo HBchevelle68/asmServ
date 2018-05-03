@@ -16,7 +16,6 @@
     ;;Addresses
     %define INADDR_ANY      0
 
-    section .text
 
     ;; no params passed
     ;; on ret rax will contain fd || -1 if error

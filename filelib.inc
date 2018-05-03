@@ -28,7 +28,6 @@
     %define O_TRUNC  1000o
     %define O_APPEND 2000o
 
-    section .text
     ;; params:
     ;; rdi -> filename/filepath
     ;; on ret, rax will contain fd || -1 if error

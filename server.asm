@@ -19,6 +19,8 @@ section .rodata
 section .text
 
 _start:
+debug: ;; added to help gdb since setting break on _start isn't working
+  nop
   nop
   nop
 

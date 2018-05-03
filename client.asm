@@ -31,6 +31,7 @@ string_length:
 _start:
   nop
   nop
+  nop
 
   ;;Make sure enough args passed
   mov    rsi, [rsp] ;; argc
