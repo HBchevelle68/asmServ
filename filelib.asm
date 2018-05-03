@@ -28,8 +28,8 @@ global filestatus
 ;create file if file doesnt exists
 ;truncate file
 ;append to file
-%define O_CREAT 100o
-%define O_TRUNC 1000o
+%define O_CREAT  100o
+%define O_TRUNC  1000o
 %define O_APPEND 2000o
 
 section .data

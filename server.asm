@@ -70,10 +70,8 @@ _start:
   js     .err
   ;;Need to make sure null terminated string
   mov [var], rax ;; save num bytes
-  mov [buffer+rax-1], BYTE 0x0 ;; remove /n from buffer
+  mov [buffer+rax], BYTE 0x0
 
-
-  ;; need to check contents of rdi, see why sys_access not working as expected
   ;;check for file
   mov    rdi, buffer
   call   filestatus
@@ -83,7 +81,7 @@ _start:
   ;; test print
   mov    rdi, 1
   mov    rsi, buffer
-  mov    rdx, buffer.len
+  mov    rdx, [var] ;; print number of bytes recv'd
   call   cwrite
   test   ax, ax
   js     .err
