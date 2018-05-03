@@ -1,14 +1,7 @@
 global _start
 
-extern csocket
-extern csetsockopt
-extern cbind
-extern clisten
-extern caccept
-extern exit
-extern cconnect
-extern cwrite
-extern close
+%include "socklib.inc"
+%include "filelib.inc"
 
 section .data
 ;; Nothing currently, possible use later
