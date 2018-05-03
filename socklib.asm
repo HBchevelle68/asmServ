@@ -87,13 +87,13 @@ cbind:
 ;; on ret rax will contain 0 || -1 if error
 clisten:
   mov rax, 50
-  ;;rdi
+  ;;rdi-> passed param
   mov rsi, 5
   syscall
   ret
 
 ;; params:
-;; rdi -> socket fd
+;; rdi-> socket fd
 ;; on ret rax will contain fd || -1 if error
 caccept:
   mov rax, 43
@@ -115,7 +115,7 @@ cconnect:
   push WORD AF_INET
 
   mov rax, 42
-  ;; rdi
+  ;; rdi-> passed param
   mov rsi, rsp
   mov rdx, 16
   syscall
@@ -129,9 +129,9 @@ cconnect:
 ;; on ret, rax will contain # of bytes read || -1 if error
 cread:
   mov rax, 0
-  ;; rdi
-  ;; rsi
-  ;; rdx
+  ;; rdi-> passed param
+  ;; rsi-> passed param
+  ;; rdx-> passed param
   syscall
   ret
 
@@ -142,9 +142,9 @@ cread:
 ;; on ret, rax will contain # of bytes read || -1 if error
 cwrite:
   mov rax, 1
-  ;; rdi
-  ;; rsi
-  ;; rdx
+  ;; rdi-> passed param
+  ;; rsi-> passed param
+  ;; rdx-> passed param
   syscall
   ret
 

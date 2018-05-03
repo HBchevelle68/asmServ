@@ -12,13 +12,13 @@ extern close
 extern filestatus
 
 section .data
-  buffer: times 100 db 0
-  .len: equ $- buffer
+  fileReq: times 100 db 0
+  .len: equ $- fileReq
 
 section .bss
-  sfd:    resd 1 ;;Server socket file desc
-  tfd:    resd 1 ;;Temp socket file desc
-  var:    resd 1
+  servfd:    resd 1 ;;Server socket file desc
+  clifd:    resd 1 ;;Temp socket file desc
+  bytesRecvd:    resd 1
 section .rodata
 ;; Nothing currently, possible use later
 
@@ -33,55 +33,55 @@ _start:
   call    csocket
   test    ax, ax
   js      .err
-  mov     [sfd], ax
+  mov     [servfd], ax
 
   ;; set socket opts
-  mov     rdi, [sfd]
+  mov     rdi, [servfd]
   call    csetsockopt
   test    ax, ax
   js     .err
 
   ;; bind to addr space
-  mov    rdi, [sfd]
+  mov    rdi, [servfd]
   mov    rsi, 0xE110
   call   cbind
   test   ax, ax
   js     .err
 
   ;; begin listen
-  mov    rdi, [sfd]
+  mov    rdi, [servfd]
   call   clisten
   test   ax, ax
   js     .err
 
   ;; accept connections
-  mov    rdi, [sfd]
+  mov    rdi, [servfd]
   call   caccept
   test   ax, ax
   js     .err
-  mov    [tfd], rax
+  mov    [clifd], rax
 
-  ;; recv
-  mov    rdi, [tfd]
-  mov    rsi, buffer
-  mov    rdx, buffer.len
+  ;; recv file request
+  mov    rdi, [clifd]
+  mov    rsi, fileReq
+  mov    rdx, fileReq.len
   call   cread
   test   ax, ax
   js     .err
   ;;Need to make sure null terminated string
-  mov [var], rax ;; save num bytes
-  mov [buffer+rax], BYTE 0x0
+  mov [bytesRecvd], rax ;; save num bytes
+  mov [fileReq+rax], BYTE 0x0
 
   ;;check for file
-  mov    rdi, buffer
+  mov    rdi, fileReq
   call   filestatus
   test   al, al
   jnz    .err
 
   ;; test print
   mov    rdi, 1
-  mov    rsi, buffer
-  mov    rdx, [var] ;; print number of bytes recv'd
+  mov    rsi, fileReq
+  mov    rdx, [bytesRecvd] ;; print number of bytes recv'd
   call   cwrite
   test   ax, ax
   js     .err
@@ -89,9 +89,9 @@ _start:
   ;; temp error label/exit
 .err:
   mov    r10, rax
-  mov    rdi, [tfd]
+  mov    rdi, [clifd]
   call   close
-  mov    rdi, [sfd]
+  mov    rdi, [servfd]
   mov    rax, r10
   call   close
   call   exit
