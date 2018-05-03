@@ -40,19 +40,22 @@ _start:
   nop
   nop
 
-
+  ;;Make sure enough args passed
   mov    rsi, [rsp] ;; argc
   cmp    rsi, 2
-  jl     .err
+  jnz    .err
+
+  ;;Get the file
   mov    rsi, [rsp+16] ;; *argv[1]
   mov    QWORD [file], rsi
 
+  ;;create socket
   call   csocket
   test   ax, ax
   js     .err
   mov    [fd], ax
 
-
+  ;;connect to server
   mov    rdi, [fd]
   mov    rsi, 0xE110
   mov    rdx, 0x0100007f
@@ -60,9 +63,11 @@ _start:
   test   ax, ax
   js     .err
 
-  
+  ;;Get legth of filename to send
   mov    rdi, [file]
   call   string_length
+
+  ;;Send filename
   mov    rdi, [fd]
   mov    rsi, [file]
   mov    rdx, rax

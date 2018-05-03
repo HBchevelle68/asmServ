@@ -16,15 +16,42 @@ section .data
   .len: equ $ - buffer
 
 section .bss
-  fd:  resd 1
-  var: resd 1
-  tmp: resd 1
+  file: resq 1
+  fd:   resd 1
+  var:  resd 1
+  tmp:  resd 1
+
 
 section .text
+
+;;rdi points to string
+string_length:
+  xor    rax, rax
+  .loop:
+  cmp    byte [rdi+rax], 0
+  je     .end
+  inc    rax
+  jmp    .loop
+  .end:
+  ret
+
+;;rdi points to string
+print_string:
+    xor rax, rax
+    push rdi
+    call string_length
+    pop rsi
+    mov rdx, rax
+    mov rdi, 1
+    mov rax, 1
+    syscall
+    ret
+
 _start:
   nop
   nop
 
+%if 0
   ;; Get file name from user
   mov rax, 0
   mov rdi, 0
@@ -33,24 +60,43 @@ _start:
   syscall
   mov [var], rax ;; save num bytes
   mov [buffer+rax-1], BYTE 0x0 ;; remove /n from buffer
+%endif
 
-;;%if 0
+  ;;Make sure enough args passed
+  mov    rsi, [rsp] ;; argc
+  cmp    rsi, 2
+  jnz    err2
+
+  ;;Get the file
+  mov    rsi, [rsp+16] ;; *argv[1]
+  mov    QWORD [file], rsi
+
+  mov    rax, 1
+  mov    rdi, 1
+  mov    rsi, [file]
+  mov    rdx, 12
+  syscall
+
+  mov rdi, [file]
+  call string_length
+
+
   ;; sys_access
   ;; uses F_OK mode to retrieve wether or not file exists
   ;; rax will return 0 if succesful and file exists || -1 if file does not exist
 filestatus:
   mov rax, 21 ;; sys_access
-  mov rdi, buffer ;; rdi -> char* of file
+  mov rdi, [file] ;; rdi -> char* of file
   mov rsi, F_OK
   syscall
   test al, al
   js err2
-;;%endif
+
   ;; fopen
   ;; on ret, rax will contain fd || -1 if error
 fileopen:
   mov rax, 2
-  mov rdi, buffer ;; rdi -> filename/filepath
+  mov rdi, [file] ;; rdi -> filename/filepath
   mov rsi, O_CREAT | O_TRUNC | O_RDWR ;; modes
   mov rdx, 0666o ;;read write for all
   syscall

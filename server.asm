@@ -12,14 +12,13 @@ extern close
 extern filestatus
 
 section .data
-;; Nothing currently, possible use later
-
   buffer: times 100 db 0
   .len: equ $- buffer
+
 section .bss
   sfd:    resd 1 ;;Server socket file desc
   tfd:    resd 1 ;;Temp socket file desc
-
+  var:    resd 1
 section .rodata
 ;; Nothing currently, possible use later
 
@@ -69,8 +68,12 @@ _start:
   call   cread
   test   ax, ax
   js     .err
+  ;;Need to make sure null terminated string
+  mov [var], rax ;; save num bytes
+  mov [buffer+rax-1], BYTE 0x0 ;; remove /n from buffer
 
-  ;; need to check contetns of rdi, see why sys_access not working as expected
+
+  ;; need to check contents of rdi, see why sys_access not working as expected
   ;;check for file
   mov    rdi, buffer
   call   filestatus
