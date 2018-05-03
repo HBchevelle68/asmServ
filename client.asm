@@ -29,6 +29,7 @@ string_length:
 
 
 _start:
+debug:
   nop
   nop
   nop
