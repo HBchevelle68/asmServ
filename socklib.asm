@@ -154,3 +154,4 @@ cwrite:
 exit:
   mov rax, 60
   syscall
+  ret
