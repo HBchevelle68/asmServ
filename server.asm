@@ -28,33 +28,34 @@ debug: ;; added to help gdb since setting break on _start isn't working
   ;; create socket
   call    csocket
   test    ax, ax
-  js      .err
+  js      err
   mov     [servfd], ax
 
   ;; set socket opts
   mov     rdi, [servfd]
   call    csetsockopt
   test    ax, ax
-  js     .err
+  js     err
 
   ;; bind to addr space
   mov    rdi, [servfd]
   mov    rsi, 0xE110
   call   cbind
   test   ax, ax
-  js     .err
+  js     err
 
   ;; begin listen
   mov    rdi, [servfd]
   call   clisten
   test   ax, ax
-  js     .err
+  js     err
 
+acceptLoop:
   ;; accept connections
   mov    rdi, [servfd]
   call   caccept
   test   ax, ax
-  js     .err
+  js     err
   mov    [clifd], rax
 
   ;; recv file request
@@ -63,16 +64,16 @@ debug: ;; added to help gdb since setting break on _start isn't working
   mov    rdx, fileReq.len
   call   cread
   test   ax, ax
-  js     .err
+  js     err
   ;;Need to make sure null terminated string
   mov    [bytesRecvd], rax ;; save num bytes
   mov    [fileReq+rax], BYTE 0x0
 
   ;;check for file
   mov    rdi, fileReq
-  call   filestatus
+  call   fileaccess
   test   al, al
-  jnz    .err
+  jnz    err
 
   ;; test print
   mov    rdi, 1
@@ -80,13 +81,13 @@ debug: ;; added to help gdb since setting break on _start isn't working
   mov    rdx, [bytesRecvd] ;; print number of bytes recv'd
   call   cwrite
   test   ax, ax
-  js     .err
+  js     err
 
   ;;open file
   mov    rdi, fileReq
   call   fopen
   test   ax, ax
-  js     .err
+  js     err
   mov    [open_f_fd], rax ;;save open file's fd
 
   ;;close file
@@ -96,7 +97,7 @@ debug: ;; added to help gdb since setting break on _start isn't working
 
   ;; temp error label/exit until specfic error msgs built
 
-.err:
+err:
   mov    r10, rax
   mov    rdi, [clifd]
   call   close

@@ -85,7 +85,7 @@
       ;; uses F_OK mode to retrieve wether or not file exists
       ;; rdi -> char* of file
       ;; on ret, rax will return 0 if succesful and file exists || -1 if file does not exist
-    filestatus:
+    fileaccess:
       mov rax, 21
       ;; rdi
       mov rsi, F_OK

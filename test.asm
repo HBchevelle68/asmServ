@@ -10,7 +10,7 @@ global _start
 %define O_APPEND  2000o
 
 section .data
-  string: db "This is a test 129373456", 0xa, 0x0
+  string: db "This is a test 120591", 0xa, 0x0
   .len: equ $ - string
   buffer: times 50 db 0x0
   .len: equ $ - buffer
@@ -37,30 +37,35 @@ string_length:
 
 ;;rdi points to string
 print_string:
-    xor rax, rax
-    push rdi
-    call string_length
-    pop rsi
-    mov rdx, rax
-    mov rdi, 1
-    mov rax, 1
-    syscall
-    ret
+  xor rax, rax
+  push rdi
+  call string_length
+  pop rsi
+  mov rdx, rax
+  mov rdi, 1
+  mov rax, 1
+  syscall
+  ret
+
+;; struct stat -> 144 bytes
+;; rdi-> char* filename
+filesize:
+  mov    rax, 4   ;;sys_stat
+  ;;rdi
+  mov    rbp, rsp ;;save stack pointer
+  sub    rsp, 144 ;;allocate memory on stack for struct stat
+  mov    rsi, rsp ;;rsi now points to allocated mem for struct stat
+  syscall
+  test   ax, ax
+  js     err
+  mov    QWORD rax, [rsp+48] ;; save stat->st_size
+  mov    rsp, rbp ;; deallocate memory
+  ret
+
 
 _start:
   nop
   nop
-
-%if 0
-  ;; Get file name from user
-  mov rax, 0
-  mov rdi, 0
-  mov rsi, buffer
-  mov rdx, buffer.len
-  syscall
-  mov [var], rax ;; save num bytes
-  mov [buffer+rax-1], BYTE 0x0 ;; remove /n from buffer
-%endif
 
   ;;Make sure enough args passed
   mov    rsi, [rsp] ;; argc
@@ -78,14 +83,14 @@ _start:
   mov    rdx, 12
   syscall
   ;; testing string length function
-  mov rdi, [file]
-  call string_length
+  ;;mov rdi, [file]
+  ;;call string_length
 
 
   ;; sys_access
   ;; uses F_OK mode to retrieve wether or not file exists
   ;; rax will return 0 if succesful and file exists || -1 if file does not exist
-filestatus:
+fileaccess:
   mov rax, 21 ;; sys_access
   mov rdi, [file] ;; rdi -> char* of file
   mov rsi, F_OK
@@ -93,12 +98,17 @@ filestatus:
   test al, al
   js err2
 
+  ;;get file size
+  mov rdi, [file]
+  call filesize
+
+
   ;; fopen
   ;; on ret, rax will contain fd || -1 if error
 fileopen:
   mov rax, 2
   mov rdi, [file] ;; rdi -> filename/filepath
-  mov rsi, O_CREAT | O_TRUNC | O_RDWR ;; modes
+  mov rsi, O_CREAT | O_RDWR ;; modes
   mov rdx, 0666o ;;read write for all
   syscall
   test al, al
@@ -116,7 +126,7 @@ writetofile:
   mov rdi, [fd]
   mov rsi, string
   mov rdx, string.len
-  mov r10, 0
+  mov r10, 5
   syscall
 
 err:

@@ -12,7 +12,7 @@ client: client.o socklib.o filelib.o
 server: server.o socklib.o filelib.o
 	$(LNK) $@ -g $^
 
-test: test.o socklib.o filelib.o
+test: test.o
 	$(LNK) $@ -g $^
 
 %.o: %.asm
