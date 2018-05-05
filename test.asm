@@ -50,16 +50,17 @@ print_string:
 ;; struct stat -> 144 bytes
 ;; rdi-> char* filename
 filesize:
+  push   rbp      ;;save rbp
+  mov    rbp, rsp ;;save stack pointer
   mov    rax, 4   ;;sys_stat
   ;;rdi
-  mov    rbp, rsp ;;save stack pointer
   sub    rsp, 144 ;;allocate memory on stack for struct stat
   mov    rsi, rsp ;;rsi now points to allocated mem for struct stat
   syscall
   test   ax, ax
   js     err
   mov    QWORD rax, [rsp+48] ;; save stat->st_size
-  mov    rsp, rbp ;; deallocate memory
+  leave  ;; leave will: mov rsp, rbp & pop rbp 
   ret
 
 

@@ -19,12 +19,11 @@ section .rodata
 section .text
 
 _start:
+  nop
+  nop
+  nop
+
 debug: ;; added to help gdb since setting break on _start isn't working
-  nop
-  nop
-  nop
-
-
   ;; create socket
   call    csocket
   test    ax, ax
