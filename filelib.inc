@@ -4,11 +4,13 @@
 %ifndef FILELIB.INC
   %define FILELIB.INC
 
+    ;;
+    %define F_OK      0
+
     ;     modes
     ;read-only
     ;wirte-only
     ;read and write
-    %define F_OK      0
     %define O_RDONLY  0
     %define O_WRONLY  1
     %define O_RDWR    2
@@ -33,51 +35,9 @@
     ;; on ret, rax will contain fd || -1 if error
     fopen:
       mov rax, 2
-      ;; rdi
+      ;;rdi-> passed param
       mov rsi, O_RDWR
       mov rdx, 0666o
-      syscall
-      ret
-
-    ;; params:
-    ;; rdi -> fd of file to close
-    ;; on ret, rax will contain 0 || -1 if error
-    close:
-      mov rax, 3
-      ;; rdi
-      syscall
-      ret
-
-    ;; sys_pwrite64
-    ;; params:
-    ;; rdi -> fd of file
-    ;; rsi -> buffer
-    ;; rdx -> buffer size
-    ;; r10 -> offset
-    ;; on ret, rax will contain # bytes written to buffer || -1 on error
-    writetfd:
-      mov rax, 18
-      ;; rdi
-      ;; rsi
-      ;; rdx
-      ;; r10
-      syscall
-      ret
-
-
-    ;; sys_pread64
-    ;; params:
-    ;; rdi -> fd of file
-    ;; rsi -> buffer
-    ;; rdx -> buffer size
-    ;; r10 -> offset
-    ;; on ret, rax will contain # bytes written || -1 on error
-    readtfd:
-      mov rax, 17
-      ;; rdi
-      ;; rsi
-      ;; rdx
-      ;; r10
       syscall
       ret
 
@@ -87,9 +47,26 @@
       ;; on ret, rax will return 0 if succesful and file exists || -1 if file does not exist
     fileaccess:
       mov rax, 21
-      ;; rdi
+      ;;rdi-> passed param
       mov rsi, F_OK
       syscall
+      ret
+
+    ;; struct stat -> 144 bytes
+    ;; rdi-> char* filename
+    filesize:
+      push   rbp      ;;save rbp
+      mov    rbp, rsp ;;save stack pointer
+      mov    rax, 4   ;;sys_stat
+      ;;rdi-> passed param
+      sub    rsp, 144 ;;allocate memory on stack for struct stat
+      mov    rsi, rsp ;;rsi now points to allocated mem for struct stat
+      syscall
+      test   ax, ax
+      js     .err
+      mov    QWORD rax, [rsp+48] ;; save stat->st_size
+      .err:
+      leave  ;; leave will: mov rsp, rbp & pop rbp
       ret
 
 %endif

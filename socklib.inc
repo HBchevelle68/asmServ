@@ -105,38 +105,4 @@
       leave
       ret
 
-    ;; params:
-    ;; rdi -> fd
-    ;; rsi -> buffer
-    ;; rdx -> buffer size
-    ;; on ret, rax will contain # of bytes read || -1 if error
-    cread:
-      mov rax, 0
-      ;; rdi-> passed param
-      ;; rsi-> passed param
-      ;; rdx-> passed param
-      syscall
-      ret
-
-    ;; params:
-    ;; rdi -> fd
-    ;; rsi -> buffer
-    ;; rdx -> buffer size
-    ;; on ret, rax will contain # of bytes read || -1 if error
-    cwrite:
-      mov rax, 1
-      ;; rdi-> passed param
-      ;; rsi-> passed param
-      ;; rdx-> passed param
-      syscall
-      ret
-
-    ;; params:
-    ;; rdi -> return value
-    ;; on syscall exits and returns passed value
-    exit:
-      mov rax, 60
-      syscall
-      ret
-
 %endif

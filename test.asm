@@ -53,15 +53,50 @@ filesize:
   push   rbp      ;;save rbp
   mov    rbp, rsp ;;save stack pointer
   mov    rax, 4   ;;sys_stat
-  ;;rdi
+  ;;rdi-> passed param
   sub    rsp, 144 ;;allocate memory on stack for struct stat
   mov    rsi, rsp ;;rsi now points to allocated mem for struct stat
   syscall
   test   ax, ax
   js     err
   mov    QWORD rax, [rsp+48] ;; save stat->st_size
-  leave  ;; leave will: mov rsp, rbp & pop rbp 
+  leave  ;; leave will: mov rsp, rbp & pop rbp
   ret
+
+  ;**************************************************************************
+      ;; sys_pwrite64
+      ;; params:
+      ;; rdi -> fd of file
+      ;; rsi -> buffer
+      ;; rdx -> buffer size
+      ;; r10 -> offset
+      ;; on ret, rax will contain # bytes written to buffer || -1 on error
+      pwrite:
+        mov rax, 18
+        ;; rdi
+        ;; rsi
+        ;; rdx
+        ;; r10
+        syscall
+        ret
+
+
+      ;; sys_pread64
+      ;; params:
+      ;; rdi -> fd of file
+      ;; rsi -> buffer
+      ;; rdx -> buffer size
+      ;; r10 -> offset
+      ;; on ret, rax will contain # bytes written || -1 on error
+      pread:
+        mov rax, 17
+        ;; rdi
+        ;; rsi
+        ;; rdx
+        ;; r10
+        syscall
+        ret
+  ;**************************************************************************
 
 
 _start:
@@ -134,6 +169,7 @@ err:
   mov rax, 3
   mov rdi, [fd]
   syscall
+;;Exit syscall
 err2:
   mov rax, 60
   mov rdi, rax

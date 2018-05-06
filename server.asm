@@ -58,10 +58,17 @@ acceptLoop:
   mov    [clifd], rax
 
   ;; recv file request
+  ;; rax -> read syscall
+  ;; rdi -> fd
+  ;; rsi -> buffer
+  ;; rdx -> buffer size
+  ;; on ret, rax will contain # of bytes read || -1 if error
+recv:
+  mov    rax, 0
   mov    rdi, [clifd]
   mov    rsi, fileReq
   mov    rdx, fileReq.len
-  call   cread
+  syscall
   test   ax, ax
   js     err
   ;;Need to make sure null terminated string
@@ -74,13 +81,15 @@ acceptLoop:
   test   al, al
   jnz    err
 
-  ;; test print
+  ;; test print**********************************************************
+  mov    rax, 1
   mov    rdi, 1
   mov    rsi, fileReq
   mov    rdx, [bytesRecvd] ;; print number of bytes recv'd
-  call   cwrite
+  syscall
   test   ax, ax
   js     err
+  ;;*********************************************************************
 
   ;;open file
   mov    rdi, fileReq
@@ -91,16 +100,26 @@ acceptLoop:
 
   ;;close file
   ;;Keep this here until send loop is built
+  mov    rax, 3
   mov    rdi, [open_f_fd]
-  call   close
+  syscall
 
   ;; temp error label/exit until specfic error msgs built
-
 err:
-  mov    r10, rax
-  mov    rdi, [clifd]
-  call   close
-  mov    rdi, [servfd]
-  mov    rax, r10
-  call   close
-  call   exit
+  push   rax
+  .closeClientSock:
+    mov  rax, 3
+    mov  rdi, [clifd]
+    syscall
+  .closeServerSock:
+    mov  rax, 3
+    mov  rdi, [servfd]
+    syscall
+  pop    rdi ;;return value for exit call
+
+  ;; rax -> exit syscall
+  ;; rdi -> return value
+  ;; on syscall exits and returns passed value
+exit:
+  mov    rax, 60
+  syscall
