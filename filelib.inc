@@ -54,6 +54,7 @@
 
     ;; struct stat -> 144 bytes
     ;; rdi-> char* filename
+    ;; on ret will return size of file in bytes || -1 on error
     filesize:
       push   rbp      ;;save rbp
       mov    rbp, rsp ;;save stack pointer

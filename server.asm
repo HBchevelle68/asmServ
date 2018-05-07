@@ -12,6 +12,7 @@ section .bss
   servfd:        resd 1 ;;Server socket file desc
   clifd:         resd 1 ;;Temp socket file desc
   bytesRecvd:    resd 1 ;;Bytes Recieved over the wire
+  fsize:         resd 1
 
 section .rodata
 ;; Nothing currently, possible use later
@@ -80,6 +81,14 @@ recv:
   call   fileaccess
   test   al, al
   jnz    err
+
+  ;;file exists, get file size
+  mov    rdi, fileReq
+  call   filesize
+  test   rax, rax
+  js     err
+  mov    [fsize], rax
+
 
   ;; test print**********************************************************
   mov    rax, 1

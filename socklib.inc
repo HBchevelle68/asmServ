@@ -1,5 +1,5 @@
 ;;
-;;   syscall wrappers
+;;   socket operations
 ;;
 %ifndef SOCKLIB.INC
   %define SOCKLIB.INC
