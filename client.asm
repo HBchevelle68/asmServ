@@ -3,17 +3,15 @@ global _start
 %include "socklib.inc"
 %include "filelib.inc"
 
+%define fileNotFound 0
+%define fileFound    1
+
 section .data
 ;; Nothing currently, possible use later
-string: db "This is a test 129373456", 0xa, 0x0
-.len: equ $ - string
 
 section .bss
-fd:      resd 1
-file:    resq 1
-
-section .rodata
-;; Nothing currently, possible use later
+  sockfd:    resd 1 ;;integer variable to hold socket file desc
+  fStrPtr:   resq 1 ;;File string pointer to cmd arg provided
 
 section .text
 
@@ -34,57 +32,64 @@ debug:
   nop
   nop
 
-  ;;Make sure enough args passed
+;;Make sure enough args passed
+;----------------------------------------------------------------------
   mov    rsi, [rsp] ;; argc
   cmp    rsi, 2
   jnz    err
 
-  ;;Get the file
+;;Get the file
+;----------------------------------------------------------------------
   mov    rsi, [rsp+16] ;; *argv[1]
-  mov    QWORD [file], rsi
+  mov    QWORD [fStrPtr], rsi
 
-  ;;create socket
+;;create socket
+;----------------------------------------------------------------------
   call   csocket
   test   ax, ax
   js     err
-  mov    [fd], ax
+  mov    [sockfd], ax
 
-  ;;connect to server
-  mov    rdi, [fd]
-  mov    rsi, 0xE110 ;; hardcoded port 4321 for now
+;;connect to server
+;----------------------------------------------------------------------
+  mov    rdi, [sockfd]
+  mov    rsi, 0xE110     ;; hardcoded port 4321 for now
   mov    rdx, 0x0100007f ;; hardcoded ip 127.0.0.1 for now
   call   cconnect
   test   ax, ax
   js     err
 
-  ;;Get legth of filename to send
-  mov    rdi, [file]
+;;Get legth of filename to send
+;----------------------------------------------------------------------
+  mov    rdi, [fStrPtr]
   call   string_length
   push   rax
-  ;;Send filename
-  ;; rdi -> fd
-  ;; rsi -> buffer
-  ;; rdx -> buffer size
-  ;; on ret, rax will contain # of bytes read || -1 if error
+
+;;Send filename
+;; rdi -> fd
+;; rsi -> buffer
+;; rdx -> buffer size
+;; on ret, rax will contain # of bytes sent || -1 if error
+;----------------------------------------------------------------------
 send:
   mov    rax, 1
-  mov    rdi, [fd]
-  mov    rsi, [file]
+  mov    rdi, [sockfd]
+  mov    rsi, [fStrPtr]
   pop    rdx
   syscall
   test   ax, ax
   js     err
 
-close:
-
+;;Teardown
+;----------------------------------------------------------------------
 err:
   push   rax
-%if 0
+
   .close:
     mov  rax, 3
-    mov  rdi, [fd]
+    mov  rdi, [sockfd]
     syscall
-%endif
+
   pop    rdi
   ;; rax _> exit syscall
   ;; rdi -> return value
