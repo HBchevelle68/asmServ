@@ -91,24 +91,13 @@ acceptLoop:
   jge    err
   mov    [fileReq+rax], BYTE 0x0
 
+;; Check if file even exists with sys_access syscall
 ;----------------------------------------------------------------------
 fileExists:
   mov    rdi, fileReq
   call   fileaccess
   test   al, al
   jnz    err
-
-;; rdi -> fd
-;; rsi -> buffer
-;; rdx -> buffer size
-;; on ret, rax will contain # of bytes sent || -1 if error
-;----------------------------------------------------------------------
-  .sendFileExists:
-
-
-        ;; TO DO
-
-  .sendFileNotFound:
 
 ;; Get the size of the file to track progress
 ;----------------------------------------------------------------------
@@ -118,6 +107,29 @@ getFileSize:
   test   rax, rax
   js     err
   mov    [fsize], rax
+
+;; rdi -> fd
+;; rsi -> buffer
+;; rdx -> buffer size
+;; on ret, rax will contain # of bytes sent || -1 if error
+;----------------------------------------------------------------------
+  .sendFileExists:
+
+      .formatMsg:
+      xor rax, rax ;;clear register
+      xor rdi, rdi ;;clear register
+      mov rax, [fsize]
+      mov rdi, 0x01 ;
+      rol rdi, 8
+      or  rdi, 0x24
+      rol rdi, 48
+      or  rdi, rax
+
+        ;; TO DO
+
+  .sendFileNotFound:
+
+
 
 
   ;; test print**********************************************************
