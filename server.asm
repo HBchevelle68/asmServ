@@ -3,9 +3,10 @@ global _start
 %include "socklib.inc"
 %include "filelib.inc"
 
-%define fileNotFound 0
-%define fileFound    1
-
+%define fileNotFound  0
+%define fileFound     1
+%define respCodeSz    6
+%define defaultBuffSz 1500
 
 section .data
   fileToGet:     times 100 db 0
@@ -23,7 +24,6 @@ section .bss
   bytesRecvd:    resd 1 ;;Bytes Recieved over the wire
 
   ;; Mem Alloc Vars
-  addrPtr:       resq 1 ;;Starting addr of allocated mem
   initAddr:      resq 1 ;;initial addr of prog break (data seg end)
   currAddr:      resq 1 ;;current addr of prog break
 
@@ -133,7 +133,7 @@ allocMem:
 .alloc:
   mov    rax, 12 ;; sys_brk
   mov    rdi, [currAddr]
-  add    rdi, 1500 ;; allocate 1500 bytes
+  add    rdi, defaultBuffSz ;; allocate 1500 bytes
   syscall
   mov    [currAddr], rax
 
@@ -145,44 +145,38 @@ allocMem:
 ;----------------------------------------------------------------------
 sendFileExists:
 
-
-%if 0
-  xor    rax, rax ;;clear register
-  xor    rdi, rdi ;;clear register
-  mov    rax, [fsize]
-  or     rdi, 0x01 ;
-  rol    rdi, 8  ;; rotate one byte left
-  or     rdi, 0x24
-  rol    rdi, 48 ;; rotate one byte right
-  or     rdi, rax
-
-  ;; 8-byte response in rdi
-  ;; Move to buff
-  mov    rax, [initAddr]
-  mov    QWORD [rax], rdi ;; 8-byte response
-%endif
 .formatMsg:
   mov    rsi,  [initAddr] ;;point to alloc'd mem buff
   mov    BYTE  [rsi], 0x01
   mov    BYTE  [rsi+1], '$'
-  mov    eax, [fsize]
+  mov    eax,  [fsize]
   mov    DWORD [rsi+2], eax
 
 .send:
   mov    rax, 1          ;; sys_send
   mov    rdi, [clifd]    ;; clinet sock addr
   mov    rsi, [initAddr] ;; allocated mem buff
-  mov    rdx, 6
+  mov    rdx, respCodeSz
   syscall
+  jmp debugPrint
 
 
-        ;; TO DO
-
+;----------------------------------------------------------------------
 sendFileNotFound:
 
+.formatMsg:
+  mov    rsi,  [initAddr] ;;point to alloc'd mem buff
+  mov    BYTE  [rsi], 0x00
+  mov    BYTE  [rsi+1], '$'
 
+.send:
+  mov    rax, 1          ;; sys_send
+  mov    rdi, [clifd]    ;; clinet sock addr
+  mov    rsi, [initAddr] ;; allocated mem buff
+  mov    rdx, respCodeSz
+  syscall
 
-
+debugPrint:
   ;; test print**********************************************************
   mov    rax, 1
   mov    rdi, 1

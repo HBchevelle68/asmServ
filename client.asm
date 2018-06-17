@@ -3,17 +3,26 @@ global _start
 %include "socklib.inc"
 %include "filelib.inc"
 
-%define fileNotFound 0
-%define fileFound    1
+%define fileNotFound  0x00
+%define fileFound     0x01
+%define respCodeSz    6
+%define defaultBuffSz 1500
 
 section .data
 ;; Nothing currently, possible use later
-  tbuff:     times 100 db 0
-  .len:      equ $ - tbuff
 
 section .bss
-  sockfd:    resd 1 ;;integer variable to hold socket file desc
-  fStrPtr:   resq 1 ;;File string pointer to cmd arg provided
+  ;; Network Vars
+  sockfd:        resd 1 ;;integer variable to hold socket file desc
+
+  ;; File Vars
+  fStrPtr:       resq 1 ;;String pointer to file cmd arg provided
+  open_f_fd:     resd 1 ;;Open file file descriptor
+  fsize:         resd 1 ;;Size of file in Bytes
+
+  ;; Mem Alloc Vars
+  initAddr:      resq 1 ;;initial addr of prog break (data seg end)
+  currAddr:      resq 1 ;;current addr of prog break
 
 section .text
 
@@ -73,7 +82,6 @@ debug:
 ;; rdx -> buffer size
 ;; on ret, rax will contain # of bytes sent || -1 if error
 ;----------------------------------------------------------------------
-;----------------------------------------------------------------------
 send:
   mov    rax, 1
   mov    rdi, [sockfd]
@@ -83,6 +91,29 @@ send:
   test   ax, ax
   js     err
 
+;; Allocate memory for buffer
+;; after syscall rax will contain addr || -1 for error
+;----------------------------------------------------------------------
+allocMem:
+
+.getCurrBrk:
+  mov    rax, 12 ;; sys_brk
+  mov    rdi, 0  ;; 0 returns current heap break addr
+  syscall
+  mov    [initAddr], rax ;; update vars
+  mov    [currAddr], rax
+
+  ;; For now just alloc 1.5 KB
+
+  ;; TODO
+  ;; Increase size and add check to see if full size is needed
+
+.alloc:
+  mov    rax, 12 ;; sys_brk
+  mov    rdi, [currAddr]
+  add    rdi, 1500 ;; allocate 1500 bytes
+  syscall
+  mov    [currAddr], rax
 ;; Recv file found or file doesnt exist
 ;; rax -> read syscall
 ;; rdi -> fd
@@ -90,15 +121,34 @@ send:
 ;; rdx -> buffer size
 ;; on ret, rax will contain # of bytes read || -1 if error
 ;----------------------------------------------------------------------
-;----------------------------------------------------------------------
+
 recv:
    mov    rax, 0
    mov    rdi, [sockfd]
-   mov    rsi, tbuff
-   mov    rdx, tbuff.len
+   mov    rsi, [initAddr]
+   mov    rdx, respCodeSz
    syscall
    test   ax, ax
    js     err
+
+checkCode:
+   cmp    BYTE [rsi], fileFound
+   jz     fileFound
+   js     fileNotFound
+
+
+found:
+  nop
+  nop
+  nop
+
+notFound:
+  nop
+  nop
+  nop
+
+
+
 
 ;;Teardown
 ;----------------------------------------------------------------------
