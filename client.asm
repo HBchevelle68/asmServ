@@ -8,6 +8,8 @@ global _start
 
 section .data
 ;; Nothing currently, possible use later
+  tbuff:     times 100 db 0
+  .len:      equ $ - tbuff
 
 section .bss
   sockfd:    resd 1 ;;integer variable to hold socket file desc
@@ -71,6 +73,7 @@ debug:
 ;; rdx -> buffer size
 ;; on ret, rax will contain # of bytes sent || -1 if error
 ;----------------------------------------------------------------------
+;----------------------------------------------------------------------
 send:
   mov    rax, 1
   mov    rdi, [sockfd]
@@ -79,6 +82,23 @@ send:
   syscall
   test   ax, ax
   js     err
+
+;; Recv file found or file doesnt exist
+;; rax -> read syscall
+;; rdi -> fd
+;; rsi -> buffer
+;; rdx -> buffer size
+;; on ret, rax will contain # of bytes read || -1 if error
+;----------------------------------------------------------------------
+;----------------------------------------------------------------------
+recv:
+   mov    rax, 0
+   mov    rdi, [sockfd]
+   mov    rsi, tbuff
+   mov    rdx, tbuff.len
+   syscall
+   test   ax, ax
+   js     err
 
 ;;Teardown
 ;----------------------------------------------------------------------
