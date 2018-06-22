@@ -133,8 +133,8 @@ recv:
 
 checkCode:
    cmp    BYTE [rsi], fileFound
-   jz     fileFound
-   js     fileNotFound
+   jz     found
+   js     notFound
 
 
 found:

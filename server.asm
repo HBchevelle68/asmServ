@@ -36,8 +36,35 @@ _start:
 
 debug: ;; added to help gdb since setting break on _start isn't working
 
+
+;; Allocate memory for buffer
+;; after syscall rax will contain addr || -1 for error
+;----------------------------------------------------------------------
+allocMem:
+
+.getCurrBrk:
+  mov    rax, 12 ;; sys_brk
+  mov    rdi, 0  ;; 0 returns current heap break addr
+  syscall
+  mov    QWORD [initAddr], rax ;; update vars
+  mov    QWORD [currAddr], rax
+
+  ;; For now just alloc 1.5 KB
+
+  ;; TODO
+  ;; Increase size and add check to see if full size is needed
+
+.alloc:
+  mov    rax, 12 ;; sys_brk
+  mov    rdi, [currAddr]
+  add    rdi, defaultBuffSz ;; allocate 1500 bytes
+  syscall
+  mov    [currAddr], rax
+
+
 ;; create socket
 ;----------------------------------------------------------------------
+socket:
   call    csocket
   test    ax, ax
   js      err
@@ -45,6 +72,7 @@ debug: ;; added to help gdb since setting break on _start isn't working
 
 ;; set socket opts
 ;----------------------------------------------------------------------
+setsockopts:
   mov     rdi, [servfd]
   call    csetsockopt
   test    ax, ax
@@ -52,6 +80,7 @@ debug: ;; added to help gdb since setting break on _start isn't working
 
 ;; bind to addr space
 ;----------------------------------------------------------------------
+bind:
   mov    rdi, [servfd]
   mov    rsi, 0xE110
   call   cbind
@@ -60,6 +89,7 @@ debug: ;; added to help gdb since setting break on _start isn't working
 
 ;; begin listen
 ;----------------------------------------------------------------------
+listen:
   mov    rdi, [servfd]
   call   clisten
   test   ax, ax
@@ -91,8 +121,8 @@ acceptLoop:
    js     err
 
    ;;Need to make sure null terminated string
-   mov    [bytesRecvd], rax ;; save num bytes
-   cmp    rax, 100          ;; CONDITIONAL check that file name recv fits in buf
+   mov    DWORD [bytesRecvd], eax ;; save num bytes
+   cmp    rax, 100 ;; CONDITIONAL check that file name recv'd fits in buf
    jge    err
    mov    [fileToGet+rax], BYTE 0x0
 
@@ -101,8 +131,8 @@ acceptLoop:
 fileExists:
   mov    rdi, fileToGet
   call   fileaccess
-  test   al, al
-  jnz    err
+  test   al, al ;; see if file found, 0 if true, -1 if false or error
+  jnz    sendFileNotFound ;; jump if false 
 
 ;; Get the size of the file to track progress
 ;----------------------------------------------------------------------
@@ -112,31 +142,6 @@ getFileSize:
   test   rax, rax
   js     err
   mov    [fsize], rax
-
-;; Allocate memory for buffer
-;; after syscall rax will contain addr || -1 for error
-;----------------------------------------------------------------------
-allocMem:
-
-.getCurrBrk:
-  mov    rax, 12 ;; sys_brk
-  mov    rdi, 0  ;; 0 returns current heap break addr
-  syscall
-  mov    [initAddr], rax ;; update vars
-  mov    [currAddr], rax
-
-  ;; For now just alloc 1.5 KB
-
-  ;; TODO
-  ;; Increase size and add check to see if full size is needed
-
-.alloc:
-  mov    rax, 12 ;; sys_brk
-  mov    rdi, [currAddr]
-  add    rdi, defaultBuffSz ;; allocate 1500 bytes
-  syscall
-  mov    [currAddr], rax
-
 
 ;; rdi -> fd
 ;; rsi -> buffer
@@ -181,7 +186,7 @@ debugPrint:
   mov    rax, 1
   mov    rdi, 1
   mov    rsi, fileToGet
-  mov    rdx, [bytesRecvd] ;; print number of bytes recv'd
+  mov    edx, DWORD [bytesRecvd] ;; print number of bytes recv'd
   syscall
   test   ax, ax
   js     err
