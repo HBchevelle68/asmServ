@@ -132,7 +132,7 @@ fileExists:
   mov    rdi, fileToGet
   call   fileaccess
   test   al, al ;; see if file found, 0 if true, -1 if false or error
-  jnz    sendFileNotFound ;; jump if false 
+  jnz    sendFileNotFound ;; jump if false
 
 ;; Get the size of the file to track progress
 ;----------------------------------------------------------------------
@@ -157,12 +157,12 @@ sendFileExists:
   mov    eax,  [fsize]
   mov    DWORD [rsi+2], eax
 
-.send:
-  mov    rax, 1          ;; sys_send
-  mov    rdi, [clifd]    ;; clinet sock addr
-  mov    rsi, [initAddr] ;; allocated mem buff
-  mov    rdx, respCodeSz
-  syscall
+  .send:
+    mov    rax, 1          ;; sys_send
+    mov    rdi, [clifd]    ;; clinet sock addr
+    mov    rsi, [initAddr] ;; allocated mem buff
+    mov    rdx, respCodeSz
+    syscall
   jmp debugPrint
 
 
@@ -203,54 +203,49 @@ openfile:
   js     err
   mov    [open_f_fd], rax ;;save open file's fd
 
-%if 0
+
 ReadnSendLoop:
-  push rbp
-  mov  rbp, rsp  ;; save stack ptr
-  sub  rsp, 1500 ;; allocate mem
-  mov  [sframeptr], rsp ;; mov stack ptr to var
+
   mov  DWORD [bytesRead], 0 ;; set offset var to 0
 
-  ;; sys_pread64
-  ;; params:
-  ;; rdi -> fd of file
-  ;; rsi -> buffer
-  ;; rdx -> buffer size
-  ;; r10 -> offset
-  ;; on ret, rax will contain # bytes written || -1 on error
-  .pread:
-    mov  rax, 17
-    mov  rdi, [open_f_fd]
-    mov  rsi, [sframeptr]
-    mov  rdx, 1500
-    mov  r10, [bytesRead]
-    syscall
+;; sys_pread64
+;; params:
+;; rdi -> fd of file
+;; rsi -> buffer
+;; rdx -> buffer size
+;; r10 -> offset
+;; on ret, rax will contain # bytes written || -1 on error
+.pread:
+  mov    rax, 17
+  mov    rdi, [open_f_fd]        ;; opened file file descriptor
+  mov    rsi, [initAddr]         ;; pointer to buffer
+  mov    rdx, defaultBuffSz      ;; buffer Size
+  mov    DWORD r10d, [bytesRead] ;; read offset
+  syscall
+  ;; Test that pread has no error
+  test   rax, rax
+  js     closefile
+  push   rax      ;; push number of bytes read from file for later comparision
+  mov    rdx, rax ;; move number of bytes read from file into buffsize reg
+.send:
+  mov    rax, 1          ;; sys_send
+  mov    rdi, [clifd]    ;; clinet sock addr
+  mov    rsi, [initAddr] ;; allocated mem buff
+  ;; rdx
+  syscall
 
-    ;; Test that pread has no error
-    test rax, rax
-    js   closefile
+  pop    r10       ;; get number of bytes read from file
+  cmp    r10, rax  ;; compare # bytes read from file to bytes sent over wire
+  jne    closefile ;; if not equal error has occured
 
-    ;; r10 hold total bytes read
-    add  r10, rax  ;; add bytes read to update offset
-    mov  rax, [fsize]
-    cmp  r10, rax ;; check to see if the whole file has been read
+  ;; jump to close file until proper error messages made
 
-
-
-
-
-    mov  [bytesRead], r10 ;; update offset var
-
-
-
-
-
-
-
-%endif
-
-
-
+  mov    rax, [bytesRead]
+  add    rax, r10 ;; rax now has updated running total of bytes read from file
+  mov    [bytesRead], rax ;; update offset var
+  mov    r10, [fsize] ;; get file size from var
+  cmp    r10, rax ;; check to see if the whole file has been read
+  jne    .pread ;; if not equal then more bytes to read
 
 
 closefile:

@@ -24,5 +24,5 @@ socklib.o: socklib.inc
 filelib.o: filelib.inc
 	$(CC) $(DBFLAGS) $< -o $@
 
-clean::
+clean:
 	rm -fr *.o $(OBJS) file test testfile.txt
