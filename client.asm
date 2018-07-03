@@ -17,7 +17,7 @@ section .bss
 
   ;; File Vars
   fStrPtr:       resq 1 ;;Pointer to file cmd arg provided
-  open_f_fd:     resd 1 ;;Open file file descriptor
+  new_f_fd:      resd 1 ;;Newly created, opened file, file descriptor
   fsize:         resd 1 ;;Size of file in Bytes
 
   ;; Mem Alloc Vars
@@ -144,6 +144,14 @@ found:
   mov    DWORD eax, [rsi+2] ;; get dword in buff containing file size
   mov    DWORD [fsize], eax ;; save file size
 
+;; Create new file to write downloaded file
+.createFile:
+  mov    rsi, [fStrPtr] ;; get file name
+  call   fopen_create  ;; create file
+  test   ax, ax
+  js     err
+  mov    DWORD [new_f_fd], eax ;; save new file fd
+
 .recv:
   mov    rax, 0
   mov    rdi, [sockfd]      ;; sock fd w/ connection to server
@@ -152,6 +160,8 @@ found:
   syscall
   test   ax, ax
   js     err
+
+
 
 
 notFound:

@@ -41,6 +41,16 @@
       syscall
       ret
 
+    ;; params:
+    ;; rdi -> filename/filepath
+    ;; on ret, rax will contain fd || -1 if error
+    fopen_create:
+      mov rax, 2
+      ;;rdi-> passed param
+      mov rsi, O_CREAT | O_TRUNC
+      mov rdx, 0666o
+      syscall
+      ret
       ;; sys_access
       ;; uses F_OK mode to retrieve wether or not file exists
       ;; rdi -> char* of file
