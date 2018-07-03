@@ -16,7 +16,7 @@ section .bss
   sockfd:        resd 1 ;;integer variable to hold socket file desc
 
   ;; File Vars
-  fStrPtr:       resq 1 ;;String pointer to file cmd arg provided
+  fStrPtr:       resq 1 ;;Pointer to file cmd arg provided
   open_f_fd:     resd 1 ;;Open file file descriptor
   fsize:         resd 1 ;;Size of file in Bytes
 
@@ -27,12 +27,12 @@ section .bss
 section .text
 
 string_length:
-  xor    rax, rax
+  xor     rax, rax
   .loop:
-  cmp    byte [rdi+rax], 0
-  je     .end
-  inc    rax
-  jmp    .loop
+  cmp     byte [rdi+rax], 0
+  je      .end
+  inc     rax
+  jmp     .loop
   .end:
   ret
 
@@ -45,36 +45,36 @@ debug:
 
 ;;Make sure enough args passed
 ;----------------------------------------------------------------------
-  mov    rsi, [rsp] ;; argc
-  cmp    rsi, 2
-  jnz    err
+  mov     rsi, [rsp] ;; argc
+  cmp     rsi, 2
+  jnz     err
 
 ;;Get the file
 ;----------------------------------------------------------------------
-  mov    rsi, [rsp+16] ;; *argv[1]
-  mov    QWORD [fStrPtr], rsi
+  mov     rsi, [rsp+16] ;; *argv[1]
+  mov     QWORD [fStrPtr], rsi
 
 ;;create socket
 ;----------------------------------------------------------------------
-  call   csocket
-  test   ax, ax
-  js     err
-  mov    [sockfd], ax
+  call    csocket
+  test    ax, ax
+  js      err
+  mov     [sockfd], ax
 
 ;;connect to server
 ;----------------------------------------------------------------------
-  mov    rdi, [sockfd]
-  mov    rsi, 0xE110     ;; hardcoded port 4321 for now
-  mov    rdx, 0x0100007f ;; hardcoded ip 127.0.0.1 for now
-  call   cconnect
-  test   ax, ax
-  js     err
+  mov     rdi, [sockfd]
+  mov     rsi, 0xE110     ;; hardcoded port 4321 for now
+  mov     rdx, 0x0100007f ;; hardcoded ip 127.0.0.1 for now
+  call    cconnect
+  test    ax, ax
+  js      err
 
 ;;Get legth of filename to send
 ;----------------------------------------------------------------------
-  mov    rdi, [fStrPtr]
-  call   string_length
-  push   rax
+  mov     rdi, [fStrPtr]
+  call    string_length
+  push    rax
 
 ;;Send filename
 ;; rdi -> fd
@@ -83,13 +83,13 @@ debug:
 ;; on ret, rax will contain # of bytes sent || -1 if error
 ;----------------------------------------------------------------------
 send:
-  mov    rax, 1
-  mov    rdi, [sockfd]
-  mov    rsi, [fStrPtr]
-  pop    rdx
+  mov     rax, 1
+  mov     rdi, [sockfd]
+  mov     rsi, [fStrPtr]
+  pop     rdx
   syscall
-  test   ax, ax
-  js     err
+  test    ax, ax
+  js      err
 
 ;; Allocate memory for buffer
 ;; after syscall rax will contain addr || -1 for error
@@ -97,11 +97,11 @@ send:
 allocMem:
 
 .getCurrBrk:
-  mov    rax, 12 ;; sys_brk
-  mov    rdi, 0  ;; 0 returns current heap break addr
+  mov     rax, 12 ;; sys_brk
+  mov     rdi, 0  ;; 0 returns current heap break addr
   syscall
-  mov    [initAddr], rax ;; update vars
-  mov    [currAddr], rax
+  mov     [initAddr], rax ;; update vars
+  mov     [currAddr], rax
 
   ;; For now just alloc 1.5 KB
 
@@ -109,11 +109,12 @@ allocMem:
   ;; Increase size and add check to see if full size is needed
 
 .alloc:
-  mov    rax, 12 ;; sys_brk
-  mov    rdi, [currAddr]
-  add    rdi, 1500 ;; allocate 1500 bytes
+  mov     rax, 12 ;; sys_brk
+  mov     rdi, [currAddr]
+  add     rdi, 1500 ;; allocate 1500 bytes
   syscall
-  mov    [currAddr], rax
+  mov     [currAddr], rax
+
 ;; Recv file found or file doesnt exist
 ;; rax -> read syscall
 ;; rdi -> fd
@@ -121,26 +122,37 @@ allocMem:
 ;; rdx -> buffer size
 ;; on ret, rax will contain # of bytes read || -1 if error
 ;----------------------------------------------------------------------
-
 recv:
-   mov    rax, 0
-   mov    rdi, [sockfd]
-   mov    rsi, [initAddr]
-   mov    rdx, respCodeSz
-   syscall
-   test   ax, ax
-   js     err
+  mov    rax, 0
+  mov    rdi, [sockfd]   ;; sock fd w/ connection to server
+  mov    rsi, [initAddr] ;; pointer to buffer
+  mov    rdx, respCodeSz ;; response code size
+  syscall
+  test   ax, ax
+  js     err
 
 checkCode:
-   cmp    BYTE [rsi], fileFound
-   jz     found
-   js     notFound
+  cmp    BYTE [rsi], fileFound ;; check response code
+  je     found ;; file found == 0x1
+  jne    notFound ;; file NOT found == 0x0
+
 
 
 found:
-  nop
-  nop
-  nop
+
+.stripFileSize:
+  mov    DWORD eax, [rsi+2] ;; get dword in buff containing file size
+  mov    DWORD [fsize], eax ;; save file size
+
+.recv:
+  mov    rax, 0
+  mov    rdi, [sockfd]      ;; sock fd w/ connection to server
+  mov    rsi, [initAddr]    ;; pointer to buffer
+  mov    rdx, defaultBuffSz ;; buffer size
+  syscall
+  test   ax, ax
+  js     err
+
 
 notFound:
   nop

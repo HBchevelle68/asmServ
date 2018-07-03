@@ -223,7 +223,7 @@ ReadnSendLoop:
   mov    DWORD r10d, [bytesRead] ;; read offset
   syscall
   ;; Test that pread has no error
-  test   rax, rax
+  test   ax, ax
   js     closefile
   push   rax      ;; push number of bytes read from file for later comparision
   mov    rdx, rax ;; move number of bytes read from file into buffsize reg
