@@ -123,43 +123,44 @@ allocMem:
 ;; on ret, rax will contain # of bytes read || -1 if error
 ;----------------------------------------------------------------------
 recv:
-  mov    rax, 0
-  mov    rdi, [sockfd]   ;; sock fd w/ connection to server
-  mov    rsi, [initAddr] ;; pointer to buffer
-  mov    rdx, respCodeSz ;; response code size
+  mov     rax, 0
+  mov     rdi, [sockfd]   ;; sock fd w/ connection to server
+  mov     rsi, [initAddr] ;; pointer to buffer
+  mov     rdx, respCodeSz ;; response code size
   syscall
-  test   ax, ax
-  js     err
+  test    ax, ax
+  js      err
 
 checkCode:
-  cmp    BYTE [rsi], fileFound ;; check response code
-  je     found ;; file found == 0x1
-  jne    notFound ;; file NOT found == 0x0
+  cmp     BYTE [rsi], fileFound ;; check response code
+  je      found ;; file found == 0x1
+  jne     notFound ;; file NOT found == 0x0
 
 
 
 found:
 
 .stripFileSize:
-  mov    DWORD eax, [rsi+2] ;; get dword in buff containing file size
-  mov    DWORD [fsize], eax ;; save file size
+  mov     DWORD eax, [rsi+2] ;; get dword in buff containing file size
+  mov     DWORD [fsize], eax ;; save file size
 
 ;; Create new file to write downloaded file
+;; If file already exists will truncate file
 .createFile:
-  mov    rsi, [fStrPtr] ;; get file name
-  call   fopen_create  ;; create file
-  test   ax, ax
-  js     err
-  mov    DWORD [new_f_fd], eax ;; save new file fd
+  mov     rsi, [fStrPtr] ;; get file name
+  call    fopen_create  ;; create file
+  test    ax, ax
+  js      err
+  mov     DWORD [new_f_fd], eax ;; save new file fd
 
 .recv:
-  mov    rax, 0
-  mov    rdi, [sockfd]      ;; sock fd w/ connection to server
-  mov    rsi, [initAddr]    ;; pointer to buffer
-  mov    rdx, defaultBuffSz ;; buffer size
+  mov     rax, 0
+  mov     rdi, [sockfd]      ;; sock fd w/ connection to server
+  mov     rsi, [initAddr]    ;; pointer to buffer
+  mov     rdx, defaultBuffSz ;; buffer size
   syscall
-  test   ax, ax
-  js     err
+  test    ax, ax
+  js      err
 
 
 
@@ -182,6 +183,10 @@ err:
     mov  rdi, [sockfd]
     syscall
 
+  .freeMem:
+    mov  rax, 12
+    mov  rdi, [initAddr]
+    syscall
   pop    rdi
   ;; rax _> exit syscall
   ;; rdi -> return value
