@@ -234,19 +234,22 @@ ReadnSendLoop:
   ;; rdx
   syscall
 
+.checkSentNum:
   pop    r10       ;; get number of bytes read from file
   cmp    r10, rax  ;; compare # bytes read from file to bytes sent over wire
   jne    closefile ;; if not equal error has occured
-
   ;; jump to close file until proper error messages made
 
+.updateVar:
   mov    rax, [bytesRead]
-  add    rax, r10 ;; rax now has updated running total of bytes read from file
-  mov    [bytesRead], rax ;; update offset var
+  add    rax, r10 ;; rax now has running total of bytes read from file
+  mov    [bytesRead], rax ;; update total of bytes read from file
+
+.checkDone:
   mov    r10, [fsize] ;; get file size from var
   cmp    r10, rax ;; check to see if the whole file has been read
-  jne    .pread ;; if not equal then more bytes to read
-
+  jg     .pread ;; if fsize > bytesRead; more bytes to read
+  je     closefile ;; if fsize == brecvd; file transfer complete
 
 closefile:
   ;;Keep this here until send loop is built

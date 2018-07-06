@@ -47,7 +47,7 @@
     fopen_create:
       mov rax, 2
       ;;rdi-> passed param
-      mov rsi, O_CREAT | O_TRUNC
+      mov rsi, O_CREAT | O_TRUNC | O_WRONLY
       mov rdx, 0666o
       syscall
       ret

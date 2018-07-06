@@ -155,7 +155,7 @@ found:
 ;; Create new file to write downloaded file
 ;; If file already exists will truncate file
 .createFile:
-  mov     rsi, [fStrPtr] ;; get file name
+  mov     rdi, [newfStrPtr] ;; get file name
   call    fopen_create  ;; create file
   test    ax, ax
   js      err
