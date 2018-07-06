@@ -225,6 +225,7 @@ err:
   syscall
 
   pop    rdi ;; pop exit val
+  jmp    exit
 
 printUsage:
 
