@@ -17,8 +17,9 @@ section .bss
 
   ;; File Vars
   fStrPtr:       resq 1 ;;Pointer to file cmd arg provided
-  new_f_fd:      resd 1 ;;Newly created, opened file, file descriptor
+  new_f_fd:      resd 1 ;;Newly created file, fd
   fsize:         resd 1 ;;Size of file in Bytes
+  brecvd:        resd 1 ;;number of bytes recv'd
 
   ;; Mem Alloc Vars
   initAddr:      resq 1 ;;initial addr of prog break (data seg end)
@@ -74,7 +75,7 @@ debug:
 ;----------------------------------------------------------------------
   mov     rdi, [fStrPtr]
   call    string_length
-  push    rax
+  push    rax ;; push file length
 
 ;;Send filename
 ;; rdi -> fd
@@ -86,10 +87,10 @@ send:
   mov     rax, 1
   mov     rdi, [sockfd]
   mov     rsi, [fStrPtr]
-  pop     rdx
+  pop     rdx ;; pop file length (see prev call)
   syscall
   test    ax, ax
-  js      err
+  js      err ;; if <0 branch
 
 ;; Allocate memory for buffer
 ;; after syscall rax will contain addr || -1 for error
@@ -153,6 +154,7 @@ found:
   js      err
   mov     DWORD [new_f_fd], eax ;; save new file fd
 
+;; Recv network data from server
 .recv:
   mov     rax, 0
   mov     rdi, [sockfd]      ;; sock fd w/ connection to server
@@ -162,7 +164,28 @@ found:
   test    ax, ax
   js      err
 
+  ;; save number of bytes recv'd and update counter
+  push    rax ;; push number of bytes recv'd
+  mov     DWORD edx, [brecvd]
+  add     eax, edx
+  mov     DWORD [brecvd], eax
 
+.writeToFile:
+  mov     rax, 1 ;; write
+  mov     rdi, [new_f_fd]
+  mov     rsi, [initAddr]
+  pop     rdx ;; pop number of bytes recv'd
+  syscall
+  test    ax, ax
+  js      err ;; if <0 branch
+
+.checkDone:
+  mov     eax, [brecvd]
+  mov     edx, [fsize]
+  cmp     edx, eax
+  jg      found.recv ;; if fsize > brecvd; more bytes to recv
+  je      done ;; if fsize == brecvd; file transfer complete
+  jb      err ;; if fsize < brecvd; error occured, too much data
 
 
 notFound:
@@ -171,23 +194,31 @@ notFound:
   nop
 
 
-
+done:
+  xor    rax,rax
 
 ;;Teardown
 ;----------------------------------------------------------------------
 err:
-  push   rax
+  push   rax ;; save exit val
 
-  .close:
-    mov  rax, 3
-    mov  rdi, [sockfd]
-    syscall
+.closeSock:;; close socket
+  mov  rax, 3
+  mov  rdi, [sockfd]
+  syscall
 
-  .freeMem:
-    mov  rax, 12
-    mov  rdi, [initAddr]
-    syscall
-  pop    rdi
+.closeFile:;; close file
+  mov  rax, 3
+  mov  rdi, [new_f_fd]
+  syscall
+
+.freeMem: ;; free allocated memory
+  mov  rax, 12
+  mov  rdi, [initAddr]
+  syscall
+
+  pop    rdi ;; pop exit val
+
   ;; rax _> exit syscall
   ;; rdi -> return value
   ;; on syscall exits and returns passed value
