@@ -9,14 +9,16 @@ global _start
 %define defaultBuffSz 1500
 
 section .data
-;; Nothing currently, possible use later
+  usage: db "usage: ./client <file request path> <destination path>", 0xa, 0x0
+  .len: equ $ - usage
 
 section .bss
   ;; Network Vars
   sockfd:        resd 1 ;;integer variable to hold socket file desc
 
   ;; File Vars
-  fStrPtr:       resq 1 ;;Pointer to file cmd arg provided
+  fStrPtr:       resq 1 ;;Pointer to file cmd arg
+  newfStrPtr:    resq 1 ;;Pointer to new file cmd arg
   new_f_fd:      resd 1 ;;Newly created file, fd
   fsize:         resd 1 ;;Size of file in Bytes
   brecvd:        resd 1 ;;number of bytes recv'd
@@ -47,13 +49,18 @@ debug:
 ;;Make sure enough args passed
 ;----------------------------------------------------------------------
   mov     rsi, [rsp] ;; argc
-  cmp     rsi, 2
-  jnz     err
+  cmp     rsi, 3
+  jnz     printUsage
 
-;;Get the file
+;;Get the file requested
 ;----------------------------------------------------------------------
   mov     rsi, [rsp+16] ;; *argv[1]
   mov     QWORD [fStrPtr], rsi
+
+;;Get the file destination
+;----------------------------------------------------------------------
+  mov     rsi, [rsp+24] ;; *argv[2]
+  mov     QWORD [newfStrPtr], rsi
 
 ;;create socket
 ;----------------------------------------------------------------------
@@ -218,6 +225,14 @@ err:
   syscall
 
   pop    rdi ;; pop exit val
+
+printUsage:
+
+  mov    rax, 1
+  mov    rdi, 1
+  mov    rsi, usage
+  mov    edx, usage.len
+  syscall
 
   ;; rax _> exit syscall
   ;; rdi -> return value
