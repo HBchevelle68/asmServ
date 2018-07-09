@@ -73,7 +73,7 @@ socket:
 ;; set socket opts
 ;----------------------------------------------------------------------
 setsockopts:
-  mov     rdi, [servfd]
+  mov     edi, DWORD [servfd]
   call    csetsockopt
   test    ax, ax
   js      err
@@ -81,7 +81,7 @@ setsockopts:
 ;; bind to addr space
 ;----------------------------------------------------------------------
 bind:
-  mov    rdi, [servfd]
+  mov    edi, DWORD [servfd]
   mov    rsi, 0xE110
   call   cbind
   test   ax, ax
@@ -90,7 +90,7 @@ bind:
 ;; begin listen
 ;----------------------------------------------------------------------
 listen:
-  mov    rdi, [servfd]
+  mov    edi, DWORD [servfd]
   call   clisten
   test   ax, ax
   js     err
@@ -98,11 +98,11 @@ listen:
 ;; accept connections
 ;----------------------------------------------------------------------
 acceptLoop:
-  mov    rdi, [servfd]
+  mov    edi, DWORD [servfd]
   call   caccept
   test   ax, ax
   js     err
-  mov    [clifd], rax
+  mov    DWORD [clifd], eax
 
 ;; recv file request
 ;; rax -> read syscall
@@ -113,7 +113,7 @@ acceptLoop:
 ;----------------------------------------------------------------------
 .recv:
    mov    rax, 0
-   mov    rdi, [clifd]
+   mov    edi, DWORD [clifd]
    mov    rsi, fileToGet
    mov    rdx, fileToGet.len
    syscall
@@ -141,7 +141,7 @@ getFileSize:
   call   filesize
   test   rax, rax
   js     err
-  mov    [fsize], rax
+  mov    DWORD [fsize], eax
 
 ;; rdi -> fd
 ;; rsi -> buffer
@@ -154,15 +154,15 @@ sendFileExists:
   mov    rsi,  [initAddr] ;;point to alloc'd mem buff
   mov    BYTE  [rsi], 0x01
   mov    BYTE  [rsi+1], '$'
-  mov    eax,  [fsize]
+  mov    eax,  DWORD [fsize]
   mov    DWORD [rsi+2], eax
 
-  .send:
-    mov    rax, 1          ;; sys_send
-    mov    rdi, [clifd]    ;; clinet sock addr
-    mov    rsi, [initAddr] ;; allocated mem buff
-    mov    rdx, respCodeSz
-    syscall
+.send:
+  mov    rax, 1          ;; sys_send
+  mov    edi, DWORD [clifd]    ;; clinet sock addr
+  mov    rsi, [initAddr] ;; allocated mem buff
+  mov    rdx, respCodeSz
+  syscall
   jmp debugPrint
 
 
@@ -176,7 +176,7 @@ sendFileNotFound:
 
 .send:
   mov    rax, 1          ;; sys_send
-  mov    rdi, [clifd]    ;; clinet sock addr
+  mov    edi, DWORD [clifd]    ;; clinet sock addr
   mov    rsi, [initAddr] ;; allocated mem buff
   mov    rdx, respCodeSz
   syscall
@@ -192,19 +192,17 @@ debugPrint:
   js     err
   ;;*********************************************************************
 
-
-
 ;;Open file prior to ReadnSendLoop
 ;----------------------------------------------------------------------
 openfile:
   mov    rdi, fileToGet
   call   fopen
-  test   ax, ax
+  test   al, al
   js     err
-  mov    [open_f_fd], rax ;;save open file's fd
+  mov    DWORD [open_f_fd], eax ;;save open file's fd
 
-
-ReadnSendLoop:
+;;Read and send loop
+rNSLoop:
 
   mov  DWORD [bytesRead], 0 ;; set offset var to 0
 
@@ -217,10 +215,10 @@ ReadnSendLoop:
 ;; on ret, rax will contain # bytes written || -1 on error
 .pread:
   mov    rax, 17
-  mov    rdi, [open_f_fd]        ;; opened file file descriptor
+  mov    edi, DWORD [open_f_fd]        ;; opened file file descriptor
   mov    rsi, [initAddr]         ;; pointer to buffer
   mov    rdx, defaultBuffSz      ;; buffer Size
-  mov    DWORD r10d, [bytesRead] ;; read offset
+  mov    r10d, DWORD [bytesRead] ;; read offset
   syscall
   ;; Test that pread has no error
   test   ax, ax
@@ -229,7 +227,7 @@ ReadnSendLoop:
   mov    rdx, rax ;; move number of bytes read from file into buffsize reg
 .send:
   mov    rax, 1          ;; sys_send
-  mov    rdi, [clifd]    ;; clinet sock addr
+  mov    edi, DWORD [clifd]    ;; clinet sock addr
   mov    rsi, [initAddr] ;; allocated mem buff
   ;; rdx
   syscall
@@ -241,20 +239,20 @@ ReadnSendLoop:
   ;; jump to close file until proper error messages made
 
 .updateVar:
-  mov    rax, [bytesRead]
-  add    rax, r10 ;; rax now has running total of bytes read from file
-  mov    [bytesRead], rax ;; update total of bytes read from file
+  mov    eax, DWORD [bytesRead]
+  add    eax, r10d ;; rax now has running total of bytes read from file
+  mov    DWORD [bytesRead], eax ;; update total of bytes read from file
 
 .checkDone:
-  mov    r10, [fsize] ;; get file size from var
-  cmp    r10, rax ;; check to see if the whole file has been read
+  mov    r10d, DWORD [fsize] ;; get file size from var
+  cmp    r10d, eax ;; check to see if the whole file has been read
   jg     .pread ;; if fsize > bytesRead; more bytes to read
   je     closefile ;; if fsize == brecvd; file transfer complete
 
 closefile:
   ;;Keep this here until send loop is built
   mov    rax, 3
-  mov    rdi, [open_f_fd]
+  mov    edi, DWORD [open_f_fd]
   syscall
 
   ;; temp error label/exit until specfic error msgs built
@@ -268,19 +266,19 @@ err:
 
   .closeClientSock:
     mov  rax, 3
-    mov  rdi, [clifd]
+    mov  edi, DWORD [clifd]
     syscall
 
   .closeServerSock:
     mov  rax, 3
-    mov  rdi, [servfd]
+    mov  edi, DWORD [servfd]
     syscall
 
   pop    rdi ;; pop return value for exit call
 
-  ;; rax -> exit syscall
-  ;; rdi -> return value
-  ;; on syscall exits and returns passed value
+;; rax -> exit syscall
+;; rdi -> return value
+;; on syscall exits and returns passed value
 exit:
   mov    rax, 60
   syscall
