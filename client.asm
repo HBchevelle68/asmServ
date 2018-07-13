@@ -9,7 +9,7 @@ global _start
 %define defaultBuffSz 1500
 
 section .data
-  usage: db "usage: ./client <file request path> <destination path>", 0xa, 0x0
+  usage: db "usage: ./client <ip> <file request path> <destination path>", 0xa, 0x0
   .len: equ $ - usage
 
 section .bss
@@ -27,6 +27,10 @@ section .bss
   initAddr:      resq 1 ;;initial addr of prog break (data seg end)
   currAddr:      resq 1 ;;current addr of prog break
 
+  ;; ip Vars
+  ipPtr:         resq  1
+  ipInt:         resd  1
+
 section .text
 
 string_length:
@@ -39,6 +43,46 @@ string_length:
   .end:
   ret
 
+;; Convert IP cmd arg to int
+;; rsi -> pointer to the string to convert
+;; ipInt var contains net byte order ip addr by end
+ipString_To_Int:
+  xor    rbx, rbx    ; clear rbx
+
+.next_octet:
+
+  movzx  eax, BYTE [rsi]
+  inc    rsi
+  sub    al, '0'    ;; convert from ASCII to number
+  imul   ebx, 10    ;; unsigned multiply by 10
+  add    ebx, eax   ;; ebx = ebx*10 + eax
+  cmp    BYTE [rsi], '.'  ;; check for octet delim
+  je     .update
+  cmp    BYTE [rsi], 0  ;; check for end of str
+  je     .update
+  jmp    .next_octet
+
+  .update:
+  mov    eax, ebx     ;; mov result into eax
+  mov    edi, [ipInt] ;; get ip var
+  cmp    edi, 0       ;; if edi (ipInt) == 0, then no rotate
+  je     .iter1
+  ror    edi, 8       ;; rotate right by $r8d bits
+
+  .iter1:
+  or     BYTE dil, al ;; update ip var
+  mov    DWORD [ipInt], edi
+  cmp    BYTE [rsi], 0 ;; test for end of str
+  je     .done
+  inc    rsi  ;; inc rsi to mov past '.'
+  jmp    ipString_To_Int
+
+  .done:
+  ror    edi, 8  ;; alst rotate right by $r8d bits
+  mov    DWORD [ipInt], edi ;; final ip var update
+  ret
+
+
 
 _start:
 debug:
@@ -49,17 +93,22 @@ debug:
 ;;Make sure enough args passed
 ;----------------------------------------------------------------------
   mov     rsi, [rsp] ;; argc
-  cmp     rsi, 3
+  cmp     rsi, 4
   jnz     printUsage
+
+;;Get the server IP
+;----------------------------------------------------------------------
+  mov     rsi, [rsp+16] ;; *argv[1]
+  mov     QWORD [ipPtr], rsi
 
 ;;Get the file requested
 ;----------------------------------------------------------------------
-  mov     rsi, [rsp+16] ;; *argv[1]
+  mov     rsi, [rsp+24] ;; *argv[2]
   mov     QWORD [fStrPtr], rsi
 
 ;;Get the file destination
 ;----------------------------------------------------------------------
-  mov     rsi, [rsp+24] ;; *argv[2]
+  mov     rsi, [rsp+32] ;; *argv[3]
   mov     QWORD [newfStrPtr], rsi
 
 ;;create socket
@@ -69,11 +118,19 @@ debug:
   js      err
   mov     [sockfd], ax
 
+;; Convert String IP to Network int
+;----------------------------------------------------------------------
+  mov     rsi, [ipPtr]
+  call    ipString_To_Int
+  test    dil, dil
+  js      err
+
+
 ;;connect to server
 ;----------------------------------------------------------------------
   mov     rdi, [sockfd]
   mov     rsi, 0xE110     ;; hardcoded port 4321 for now
-  mov     rdx, 0x0100007f ;; hardcoded ip 127.0.0.1 for now
+  mov     edx, DWORD [ipInt] ;; hardcoded ip 127.0.0.1 for now
   call    cconnect
   test    ax, ax
   js      err
