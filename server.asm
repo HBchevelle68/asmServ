@@ -6,7 +6,7 @@ global _start
 %define fileNotFound  0
 %define fileFound     1
 %define respCodeSz    6
-%define defaultBuffSz 1500
+%define defaultBuffSz 4000
 
 section .data
   fileToGet:     times 100 db 0

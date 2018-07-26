@@ -6,7 +6,7 @@ global _start
 %define fileNotFound  0x00
 %define fileFound     0x01
 %define respCodeSz    6
-%define defaultBuffSz 1500
+%define defaultBuffSz 4000
 
 section .data
   usage: db "usage: ./client <ip> <file request path> <destination path>", 0xa, 0x0
