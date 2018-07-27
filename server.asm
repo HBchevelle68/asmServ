@@ -9,6 +9,16 @@ global _start
 %define defaultBuffSz 4000
 
 section .data
+  reqStr: db "Request recieved for ", 0x0
+  .len: equ $ - reqStr
+  doneStr: db "...done!", 0xa, 0x0
+  .len: equ $ - doneStr
+  errStr: db "...oh shit, I broke!", 0xa, 0x0
+  .len: equ $ - errStr
+  restStr: db "Cleaning mem and sockets...Restarting...", 0xa, 0x0
+  .len: equ $ - restStr
+
+
   fileToGet:     times 100 db 0
   .len:          equ $ - fileToGet
 
@@ -182,6 +192,16 @@ sendFileNotFound:
   syscall
 
 debugPrint:
+
+  mov    rax, 1
+  mov    rdi, 1
+  mov    rsi, reqStr
+  mov    rdx, reqStr.len ;; print number of bytes recv'd
+  syscall
+  test   ax, ax
+  js     err
+
+
   ;; test print**********************************************************
   mov    rax, 1
   mov    rdi, 1
@@ -255,9 +275,30 @@ closefile:
   mov    edi, DWORD [open_f_fd]
   syscall
 
+done:
+  mov    rax, 1
+  mov    rdi, 1
+  mov    rsi, doneStr
+  mov    rdx, doneStr.len ;; print number of bytes recv'd
+  syscall
+  test   ax, ax
+  js     err
+  jmp    acceptLoop
+
   ;; temp error label/exit until specfic error msgs built
 err:
+
+  mov    rax, 1
+  mov    rdi, 1
+  mov    rsi, errStr
+  mov    rdx, errStr.len ;; print number of bytes recv'd
+  syscall
   push   rax
+  mov    rax, 1
+  mov    rdi, 1
+  mov    rsi, restStr
+  mov    rdx, restStr.len ;; print number of bytes recv'd
+  syscall
 
   .freeMem:
     mov  rax, 12
@@ -274,7 +315,7 @@ err:
     mov  edi, DWORD [servfd]
     syscall
 
-  pop    rdi ;; pop return value for exit call
+  jmp _start
 
 ;; rax -> exit syscall
 ;; rdi -> return value
