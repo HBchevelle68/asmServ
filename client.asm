@@ -129,8 +129,8 @@ debug:
 ;;connect to server
 ;----------------------------------------------------------------------
   mov     rdi, [sockfd]
-  mov     rsi, 0xE110     ;; hardcoded port 4321 for now
-  mov     edx, DWORD [ipInt] ;; hardcoded ip 127.0.0.1 for now
+  mov     rsi, 0xE110     ;; User supplied port
+  mov     edx, DWORD [ipInt] ;; User supplied IP
   call    cconnect
   test    ax, ax
   js      err
