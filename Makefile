@@ -1,27 +1,39 @@
-OBJS = server client
+OBJS = server server-debug client client-debug 
 CC = nasm
 CCFLAGS = -felf64
 DBFLAGS = $(CCFLAGS) -g -F dwarf
-LNK = ld -o
+LNK = ld -m elf_x86_64
 
 all: clean $(OBJS)
 
 client: client.o socklib.o filelib.o
-	$(LNK) $@ -g $^
+	$(LNK) $^ -o $@
 
 server: server.o socklib.o filelib.o
-	$(LNK) $@ -g $^
+	$(LNK) $^ -o $@
 
 test: test.o
-	$(LNK) $@ -g $^
+	$(LNK) $^ -o $@
+
+client-debug: client-debug.o socklib-debug.o filelib-debug.o
+	$(LNK) $^ -o $@
+
+server-debug: server-debug.o socklib-debug.o filelib-debug.o
+	$(LNK) $^ -o $@
+
+test-debug: test-debug.o
+	$(LNK) $^ -o $@
 
 %.o: %.asm
+	$(CC) $(CCFLAGS) $< -o $@
+
+%.o: %.inc
+	$(CC) $(CCFLAGS) $< -o $@
+
+%-debug.o: %.asm
 	$(CC) $(DBFLAGS) $< -o $@
 
-socklib.o: socklib.inc
-	$(CC) $(DBFLAGS) $< -o $@
-
-filelib.o: filelib.inc
+%-debug.o: %.inc
 	$(CC) $(DBFLAGS) $< -o $@
 
 clean:
